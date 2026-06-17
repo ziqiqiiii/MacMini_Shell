@@ -7,10 +7,12 @@
 									getcwd,isatty, open, pipe, read, unlink,
 									write, execve, ttyname, ttyslot, opendir,
 									readdir, closedir */
-# include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
+# ifndef UNIT_TEST
+#  include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
 									rl_replace_line, rl_redisplay,
 									add_history */
-# include <readline/history.h>
+#  include <readline/history.h>
+# endif
 # include <sys/wait.h>			/* wait, waitpid, wait3, wait4 */
 # include <signal.h>			/* signal, sigaction, sigemptyset, sigaddset,
 									kill */
@@ -18,15 +20,19 @@
 # include <termios.h>			/* tcsetattr, tcgetattr */
 # include <errno.h>				/* perror, strerror */
 # include <sys/ioctl.h>			/* ioctl */
-# include <curses.h>			/* tgetent, tgetflag, tgetnum, tgetstr, tgoto,
+# ifndef UNIT_TEST
+#  include <curses.h>			/* tgetent, tgetflag, tgetnum, tgetstr, tgoto,
 									tputs */
+# endif
 # include <limits.h> 			/* PATH_MAX */
 # include <string.h>
 # include <fcntl.h>				/* open flags */
 # include <libgen.h>			/* dirname */
 
 # include "libft.h"
-# include "get_next_line.h"
+# ifndef UNIT_TEST
+#  include "get_next_line.h"
+# endif
 
 # define GREEN	"\033[1;32m"
 # define BLUE	"\033[1;34m"

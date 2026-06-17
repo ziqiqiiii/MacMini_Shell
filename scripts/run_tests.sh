@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Generic test runner with coloured, formatted output.
+#
+# Usage:
+#   scripts/run_tests.sh unit   <bin1> <bin2> ...    # run compiled test binaries
+#   scripts/run_tests.sh integration <script1> ...   # run shell test scripts
+#
+# Exit code: 0 if all pass, 1 if any fail.
+
+set -euo pipefail
+
+MODE="${1:?Usage: $0 unit|integration <test ...>}"
+shift
+
+GRN=$(printf '\033[1;32m')
+RED=$(printf '\033[1;31m')
+YEL=$(printf '\033[1;33m')
+CYN=$(printf '\033[1;36m')
+RST=$(printf '\033[0m')
+
+pass=0
+fail=0
+
+run_unit() {
+  for t in "$@"; do
+    echo "${YEL}--- ${t} ---${RST}"
+    echo ""
+    output=$("$t" 2>&1) && rc=0 || rc=$?
+    echo "$output" | awk -v grn="$GRN" -v red="$RED" -v rst="$RST" -v cyn="$CYN" -F: '
+      /^-{3,}/ || /^OK$/ || /^FAIL$/ { next }
+      NF >= 4 && $4 == "PASS" { printf "  %-50s %sPASS%s\n", $3, grn, rst; next }
+      NF >= 4 && $4 == "FAIL" { printf "  %-50s %sFAIL%s\n", $3, red, rst; next }
+      /^[0-9]/ { printf "\n%s  %s%s\n\n", cyn, $0, rst }
+    '
+    if [ "$rc" -eq 0 ]; then pass=$((pass+1)); else fail=$((fail+1)); fi
+  done
+}
+
+run_integration() {
+  export ASAN_OPTIONS=detect_leaks=0
+  for s in "$@"; do
+    [ -f "$s" ] || continue
+    echo "${YEL}--- ${s} ---${RST}"
+    output=$(bash "$s" 2>&1) && rc=0 || rc=$?
+    echo "$output" | awk -v grn="$GRN" -v red="$RED" -v rst="$RST" -v cyn="$CYN" '
+      /^PASS: / { printf "  %-55s %sPASS%s\n\n", substr($0, 7), grn, rst; next }
+      /^FAIL: / { printf "  %-55s %sFAIL%s\n\n", substr($0, 7), red, rst; next }
+      { print }
+    '
+    if [ "$rc" -eq 0 ]; then pass=$((pass+1)); else fail=$((fail+1)); fi
+  done
+}
+
+case "$MODE" in
+  unit)        run_unit "$@" ;;
+  integration) run_integration "$@" ;;
+  *)           echo "Unknown mode: $MODE" >&2; exit 1 ;;
+esac
+
+echo ""
+LABEL="$(echo "$MODE" | sed 's/.*/\u&/') tests"
+if [ "$fail" -eq 0 ]; then
+  echo "${GRN}${LABEL}: ${pass} passed, ${fail} failed${RST}"
+else
+  echo "${RED}${LABEL}: ${pass} passed, ${fail} failed${RST}"
+fi
+test "$fail" -eq 0

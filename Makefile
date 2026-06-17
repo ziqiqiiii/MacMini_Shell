@@ -165,72 +165,48 @@ UNIT_BIN_DIR	:= $(UNIT_DIR)/bin
 UNIT_SOURCES	:= $(wildcard $(UNIT_DIR)/test_*.c)
 UNIT_BINS		:= $(UNIT_SOURCES:$(UNIT_DIR)/%.c=$(UNIT_BIN_DIR)/%)
 
-TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -Wall -Wextra
+TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -I./$(LIBFT_DIR)$(INC_DIR) -Wall -Wextra -DUNIT_TEST
 
-$(UNIT_BIN_DIR)/test_perms:     EXTRA_SRC := $(PERMS_SRC)
-$(UNIT_BIN_DIR)/test_rc_parser: EXTRA_SRC := ./src/01d_rc_parser.c
-
-$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c
+$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c | $(LIBFT)
 	@mkdir -p $(UNIT_BIN_DIR)
-	$(CC) $(TEST_CFLAGS) $^ $(EXTRA_SRC) -o $@
+	@$(CC) $(TEST_CFLAGS) $^ \
+		$(shell find $(SRC_DIR) -name "*$*.c" 2>/dev/null | head -1) \
+		$(LIB) \
+		-o $@
+
+TEST_RUNNER := ./scripts/run_tests.sh
 
 unit: $(UNIT_BINS)
 	@echo "$(CYAN)==> Running unit tests$(CLR_RMV)"
-	@pass=0; fail=0; \
-	grn=$$(printf '\033[1;32m'); red=$$(printf '\033[1;31m'); rst=$$(printf '\033[0m'); cyn=$$(printf '\033[1;36m'); \
-	for t in $(UNIT_BINS); do \
-	  echo "$(YELLOW)--- $$t ---$(CLR_RMV)\n"; \
-	  output=$$($$t 2>&1); rc=$$?; \
-	  echo "$$output" | awk -v grn="$${grn}" -v red="$${red}" -v rst="$${rst}" -v cyn="$${cyn}" -F: ' \
-	    /^-{3,}/ || /^OK$$/ || /^FAIL$$/ { next } \
-	    NF >= 4 && $$4 == "PASS" { printf "  %-50s %sPASS%s\n", $$3, grn, rst; next } \
-	    NF >= 4 && $$4 == "FAIL" { printf "  %-50s %sFAIL%s\n", $$3, red, rst; next } \
-	    /^[0-9]/ { printf "\n%s  %s%s\n\n", cyn, $$0, rst } \
-	  '; \
-	  if [ $$rc -eq 0 ]; then pass=$$((pass+1)); else fail=$$((fail+1)); fi; \
-	done; \
-	echo ""; \
-	if [ $$fail -eq 0 ]; then \
-	  echo "$(GREEN)Unit tests: $$pass passed, $$fail failed$(CLR_RMV)"; \
-	else \
-	  echo "$(RED)Unit tests: $$pass passed, $$fail failed$(CLR_RMV)"; \
-	fi; \
-	test $$fail -eq 0
+	@$(TEST_RUNNER) unit $(UNIT_BINS)
 
 integration: $(NAME) $(SYS_BINS)
 	@echo "$(CYAN)==> Running integration tests$(CLR_RMV)"
-	@export ASAN_OPTIONS=detect_leaks=0; \
-	pass=0; fail=0; \
-	grn=$$(printf '\033[1;32m'); red=$$(printf '\033[1;31m'); rst=$$(printf '\033[0m'); cyn=$$(printf '\033[1;36m'); \
-	for s in $(INTEGRATION_DIR)/*.sh; do \
-	  [ -f "$$s" ] || continue; \
-	  echo "$(YELLOW)--- $$s ---$(CLR_RMV)"; \
-	  output=$$(bash $$s 2>&1); rc=$$?; \
-	  echo "$$output" | awk -v grn="$${grn}" -v red="$${red}" -v rst="$${rst}" -v cyn="$${cyn}" ' \
-	    /^PASS: / { printf "  %-55s %sPASS%s\n\n", substr($$0, 7), grn, rst; next } \
-	    /^FAIL: / { printf "  %-55s %sFAIL%s\n\n", substr($$0, 7), red, rst; next } \
-	    { print } \
-	  '; \
-	  if [ $$rc -eq 0 ]; then pass=$$((pass+1)); else fail=$$((fail+1)); fi; \
-	done; \
-	echo ""; \
-	if [ $$fail -eq 0 ]; then \
-	  echo "$(GREEN)Integration tests: $$pass passed, $$fail failed$(CLR_RMV)"; \
-	else \
-	  echo "$(RED)Integration tests: $$pass passed, $$fail failed$(CLR_RMV)"; \
-	fi; \
-	test $$fail -eq 0
+	@$(TEST_RUNNER) integration $(INTEGRATION_DIR)/*.sh
 
 test: unit integration
 
 ai-unit-tests:
 	@if [ -z "$(MODULE)" ]; then \
 	  echo "Usage: make ai-unit-tests MODULE=name"; \
-	  echo "  Looks for includes/libs/name.h"; \
 	  echo "  Generates tests/unit/test_name.c"; \
 	  exit 1; \
 	fi
-	@bash ./scripts/gen_unit_tests.sh $(MODULE)
+	@MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
+	  bash ./scripts/gen_unit_tests.sh $(MODULE) \
+	  > $(UNIT_DIR)/test_$(MODULE).c
+	@echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"
+
+ai-builtin-tests:
+	@if [ -z "$(MODULE)" ]; then \
+	  echo "Usage: make ai-builtin-tests MODULE=name"; \
+	  echo "  Example: make ai-builtin-tests MODULE=09a_echo"; \
+	  exit 1; \
+	fi
+	@MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
+	  bash ./scripts/gen_builtin_tests.sh $(MODULE) \
+	  > $(UNIT_DIR)/test_$(MODULE).c
+	@echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"
 
 ################################################################################
 #                                   CLEANUP                                    #
@@ -255,6 +231,7 @@ re: fclean all
 ################################################################################
 
 .PHONY:		all clean fclean re run \
-			system-programs sys-header unit integration test ai-unit-tests
+			system-programs sys-header unit integration test \
+			ai-unit-tests ai-builtin-tests
 
 .PRECIOUS:	$(NAME) $(OBJ)
