@@ -10,6 +10,8 @@
 #include "unity.h"
 #include "minishell.h"
 
+int	g_exit_status = 0;
+
 /* Redirect fd 1 into a pipe, call pwd(), flush and restore fd 1.
    Fills buf with the captured bytes and null-terminates it.
    Returns the number of bytes captured, or -1 on pipe error. */

@@ -10,97 +10,9 @@
 
 int	g_exit_status = 0;
 
-/* --- cross-file stubs --- */
-
-char	*key_check(char *input)
-{
-	int		i;
-	char	*key;
-
-	i = 0;
-	while (ft_isalnum(input[i]) || input[i] == '_')
-		i++;
-	if (i == 0)
-		key = NULL;
-	else
-		key = ft_substr(input, 0, i);
-	return (key);
-}
-
-void	creat_new_env_node(char *key, char *input, t_list **env_list)
-{
-	t_env	*data;
-	t_list	*node;
-	char	*equal_ptr;
-
-	data = ft_calloc(1, sizeof(t_env));
-	equal_ptr = ft_strchr(input, '=');
-	data->key = ft_substr(key, 0, ft_strlen(key));
-	data->value = NULL;
-	if (equal_ptr != NULL)
-		data->value = ft_substr(input, equal_ptr - input + 1,
-					ft_strlen(input) - (equal_ptr - input));
-	node = ft_lstnew(data);
-	ft_lstadd_back(env_list, node);
-}
-
-/* --- cross-file stubs: env helpers from 09f_env.c --- */
-
-int	env_link_list(char **envp, t_list **env_list)
-{
-	int		i;
-	t_env	*content;
-	t_list	*node;
-	char	*eq;
-
-	i = 0;
-	while (envp[i])
-	{
-		content = ft_calloc(1, sizeof(t_env));
-		if (!content)
-			return (EXIT_FAILURE);
-		eq = ft_strchr(envp[i], '=');
-		content->key = ft_substr(envp[i], 0, eq - envp[i]);
-		content->value = ft_substr(envp[i], eq - envp[i] + 1,
-						ft_strlen(envp[i]) - (eq - envp[i]));
-		node = ft_lstnew(content);
-		ft_lstadd_back(env_list, node);
-		i++;
-	}
-	return (EXIT_SUCCESS);
-}
-
-char	*existed_env(char *key, t_list **env_list)
-{
-	t_list	*tmp;
-	t_env	*data;
-
-	if (!key)
-		return (NULL);
-	tmp = *env_list;
-	while (tmp)
-	{
-		data = (t_env *)tmp->content;
-		if (ft_strncmp(data->key, key, ft_strlen(key) + 1) == 0)
-			return (data->value);
-		tmp = tmp->next;
-	}
-	return (NULL);
-}
-
 /* --- helpers --- */
 
 static t_list	*g_env;
-
-static void	free_env_node(void *content)
-{
-	t_env	*data;
-
-	data = (t_env *)content;
-	free(data->key);
-	free(data->value);
-	free(data);
-}
 
 static void	make_env(char **envp)
 {
@@ -115,7 +27,7 @@ void	setUp(void)
 
 void	tearDown(void)
 {
-	ft_lstclear(&g_env, free_env_node);
+	ft_lstclear(&g_env, del_data);
 }
 
 static int	capture_stdout_export(char **cmd, char *buf, size_t size)

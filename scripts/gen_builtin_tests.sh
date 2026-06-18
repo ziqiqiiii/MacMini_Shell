@@ -8,10 +8,9 @@
 # <module> is the source file stem, e.g. "09a_echo" for src/09a_echo.c.
 #
 # The generated prompt tells the AI to:
-#   - Include "minishell.h" (UNIT_TEST is defined in TEST_CFLAGS, which
-#     excludes readline, curses, and get_next_line automatically)
-#   - Use libft.a directly (linked by the Makefile unit test rule)
-#   - Stub only cross-file minishell functions that the module calls
+#   - Include "minishell.h"
+#   - All shell source files (except 00_main.c) and libft.a are linked
+#   - Every function in minishell.h is callable — no stubs needed
 #
 # Set MACMINI_AGENT_CMD to pipe the prompt to your AI tool, otherwise the
 # prompt is printed to stdout for manual use:
@@ -68,56 +67,6 @@ USED_TYPES="$(echo "$SIGNATURES" \
   | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//' \
   || true)"
 
-# ---------------------------------------------------------------------------
-# Identify cross-file function calls so the AI knows what to stub.
-# Finds every function-call-like token in the source, removes libft calls,
-# static functions, standard C functions, and functions defined in this file.
-# ---------------------------------------------------------------------------
-extract_cross_file_deps() {
-  local src="$1"
-
-  # All function calls in the source
-  local all_calls
-  all_calls="$(grep -oE '[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(' "$src" \
-    | sed 's/[[:space:]]*($//' | sort -u || true)"
-
-  # Static functions defined in this file
-  local static_fns
-  static_fns="$(awk '/^static[[:space:]]/ && /\(/ {
-    match($0, /[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(/)
-    s = substr($0, RSTART, RLENGTH)
-    gsub(/[[:space:]]*\(/, "", s)
-    print s
-  }' "$src" | sort -u)"
-
-  # Public functions defined in this file
-  local public_fns
-  public_fns="$(echo "$SIGNATURES" \
-    | grep -oE '[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(' \
-    | sed 's/[[:space:]]*($//' | sort -u || true)"
-
-  # Filter out libft (ft_*), standard C, control-flow keywords, and local functions
-  echo "$all_calls" | while IFS= read -r fn; do
-    [[ -z "$fn" ]] && continue
-    # skip libft
-    [[ "$fn" == ft_* ]] && continue
-    # skip standard C / POSIX
-    case "$fn" in
-      printf|puts|perror|free|malloc|calloc|exit|write|read|open|close|dup|dup2|\
-      pipe|fork|chdir|getcwd|access|unlink|execve|waitpid|wait|kill|\
-      signal|sigaction|sigemptyset|sigaddset|isatty|tcgetattr|tcsetattr|\
-      snprintf|getenv|setenv|fflush|readlink|dirname|strlen|strcmp|strncmp|\
-      if|while|return|sizeof|NULL) continue ;;
-    esac
-    # skip functions defined in this file
-    echo "$static_fns" | grep -qxF "$fn" && continue
-    echo "$public_fns" | grep -qxF "$fn" && continue
-    echo "$fn"
-  done | sort -u
-}
-
-CROSS_DEPS="$(extract_cross_file_deps "$SOURCE")"
-
 build_prompt() {
   cat <<PROMPT
 You are generating a C unit test file for the MacMini Shell project.
@@ -129,20 +78,14 @@ ${SOURCE}.
 
 ## Hard constraints
 
-1. Include "minishell.h" — the build flags define UNIT_TEST, which excludes
-   readline, curses, and get_next_line headers automatically.
-2. libft.a IS linked into the unit test binary. Call ft_* functions directly
-   (ft_strlen, ft_strncmp, ft_calloc, ft_strdup, ft_substr, ft_strchr,
-   ft_lstadd_back, ft_lstnew, ft_lstclear, ft_lstdelone, ft_putstr_fd,
-   ft_isalpha, ft_isalnum, ft_atoi, ft_itoa, ft_split, ft_strjoin, etc.).
-   Do NOT write libft stubs.
+1. Include "minishell.h".
+2. ALL shell source files (except 00_main.c) and libft.a are linked into each
+   unit test binary. Every function declared in minishell.h and libft.h is
+   available — call them directly. Do NOT write stubs for any of these functions.
 3. Define \`int g_exit_status = 0;\` at file scope — minishell.h declares it
    as extern, so each test binary must supply the definition.
-4. The Makefile only compiles one shell source file per test (the one matching
-   the module name). If the module calls functions defined in OTHER shell source
-   files (not libft), provide minimal stubs for those functions in the test file.
-5. Only include standard C headers, "unity.h", and "minishell.h".
-6. Do NOT create any new header file.
+4. Only include standard C headers, "unity.h", and "minishell.h".
+5. Do NOT create any new header file.
 
 ## Project conventions
 
@@ -164,13 +107,15 @@ ${SIGNATURES:-/* (no signatures extracted — see full source below) */}
 
 ${USED_TYPES:+Project types referenced: ${USED_TYPES}
 These types are already defined in minishell.h — no forward declarations needed.
-}${CROSS_DEPS:+## Cross-file dependencies to stub
-
-The following functions are called by this module but defined in other source
-files (not libft). Provide minimal stubs in the test file:
-
-${CROSS_DEPS}
 }
+## All available functions (from minishell.h)
+
+All of the following functions are linked and callable in the test binary:
+
+\`\`\`c
+$(grep -E '^[a-z].*\(.*\);' ./includes/minishell.h)
+\`\`\`
+
 ## Full source: ${SOURCE}
 
 \`\`\`c

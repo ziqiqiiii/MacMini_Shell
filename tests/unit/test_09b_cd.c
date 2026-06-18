@@ -10,35 +10,40 @@
 
 int	g_exit_status = 0;
 
-/* --- cross-file stub: existed_env from 09f_env.c --- */
-
-static char	*g_stub_home;
-
-char	*existed_env(char *key, t_list **env_list)
-{
-	(void)env_list;
-	if (key && ft_strncmp(key, "HOME", 5) == 0)
-		return (g_stub_home);
-	return (NULL);
-}
-
 /* --- helpers --- */
 
-static char	g_orig_dir[PATH_MAX];
+static char		g_orig_dir[PATH_MAX];
+static t_list	*g_env;
+
+static void	build_env(t_list **env, const char *home)
+{
+	char	*envp[3];
+	char	home_pair[PATH_MAX];
+
+	*env = NULL;
+	if (home)
+	{
+		snprintf(home_pair, sizeof(home_pair), "HOME=%s", home);
+		envp[0] = home_pair;
+		envp[1] = NULL;
+		env_link_list(envp, env);
+	}
+}
 
 void	setUp(void)
 {
 	getcwd(g_orig_dir, sizeof(g_orig_dir));
-	g_stub_home = getenv("HOME");
+	g_env = NULL;
+	build_env(&g_env, getenv("HOME"));
 }
 
 void	tearDown(void)
 {
 	chdir(g_orig_dir);
+	ft_lstclear(&g_env, del_data);
 }
 
-static int	capture_stderr_cd(char **cmd, char *buf, size_t size,
-	t_list **env)
+static int	capture_stderr_cd(char **cmd, char *buf, size_t size)
 {
 	int		pipefd[2];
 	int		saved;
@@ -49,7 +54,7 @@ static int	capture_stderr_cd(char **cmd, char *buf, size_t size,
 	saved = dup(STDERR_FILENO);
 	dup2(pipefd[1], STDERR_FILENO);
 	close(pipefd[1]);
-	cd(cmd, env);
+	cd(cmd, &g_env);
 	dup2(saved, STDERR_FILENO);
 	close(saved);
 	n = read(pipefd[0], buf, size - 1);
@@ -65,31 +70,32 @@ static int	capture_stderr_cd(char **cmd, char *buf, size_t size,
 static void	test_cd_no_args_goes_home(void)
 {
 	char	*cmd[] = {"cd", NULL};
-	t_list	*env = NULL;
+	char	*home;
 	char	cwd[PATH_MAX];
 
-	if (!g_stub_home)
+	home = getenv("HOME");
+	if (!home)
 		TEST_IGNORE_MESSAGE("HOME not set");
-	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &env));
+	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &g_env));
 	getcwd(cwd, sizeof(cwd));
-	TEST_ASSERT_EQUAL_STRING(g_stub_home, cwd);
+	TEST_ASSERT_EQUAL_STRING(home, cwd);
 }
 
 static void	test_cd_no_args_home_unset_fails(void)
 {
 	char	*cmd[] = {"cd", NULL};
-	t_list	*env = NULL;
+	t_list	*empty_env;
 	char	buf[256];
 	int		pipefd[2];
 	int		saved;
 	int		ret;
 
-	g_stub_home = NULL;
+	empty_env = NULL;
 	pipe(pipefd);
 	saved = dup(STDERR_FILENO);
 	dup2(pipefd[1], STDERR_FILENO);
 	close(pipefd[1]);
-	ret = cd(cmd, &env);
+	ret = cd(cmd, &empty_env);
 	dup2(saved, STDERR_FILENO);
 	close(saved);
 	read(pipefd[0], buf, sizeof(buf));
@@ -100,10 +106,9 @@ static void	test_cd_no_args_home_unset_fails(void)
 static void	test_cd_valid_path(void)
 {
 	char	*cmd[] = {"cd", "/tmp", NULL};
-	t_list	*env = NULL;
 	char	cwd[PATH_MAX];
 
-	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &env));
+	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &g_env));
 	getcwd(cwd, sizeof(cwd));
 	TEST_ASSERT_EQUAL_STRING("/tmp", cwd);
 }
@@ -111,17 +116,14 @@ static void	test_cd_valid_path(void)
 static void	test_cd_invalid_path_fails(void)
 {
 	char	*cmd[] = {"cd", "/nonexistent_dir_12345", NULL};
-	t_list	*env = NULL;
 	char	buf[256];
 
-	capture_stderr_cd(cmd, buf, sizeof(buf), &env);
-	/* perror prints "cd: : No such file or directory" */
+	capture_stderr_cd(cmd, buf, sizeof(buf));
 }
 
 static void	test_cd_invalid_path_returns_failure(void)
 {
 	char	*cmd[] = {"cd", "/nonexistent_dir_12345", NULL};
-	t_list	*env = NULL;
 	int		pipefd[2];
 	int		saved;
 	int		ret;
@@ -130,7 +132,7 @@ static void	test_cd_invalid_path_returns_failure(void)
 	saved = dup(STDERR_FILENO);
 	dup2(pipefd[1], STDERR_FILENO);
 	close(pipefd[1]);
-	ret = cd(cmd, &env);
+	ret = cd(cmd, &g_env);
 	dup2(saved, STDERR_FILENO);
 	close(saved);
 	close(pipefd[0]);
@@ -141,19 +143,19 @@ static void	test_cd_tilde_expands_to_home(void)
 {
 	char	*tilde;
 	char	*cmd[3];
-	t_list	*env = NULL;
+	char	*home;
 	char	cwd[PATH_MAX];
 
-	if (!g_stub_home)
+	home = getenv("HOME");
+	if (!home)
 		TEST_IGNORE_MESSAGE("HOME not set");
 	tilde = ft_strdup("~");
 	cmd[0] = "cd";
 	cmd[1] = tilde;
 	cmd[2] = NULL;
-	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &env));
+	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &g_env));
 	getcwd(cwd, sizeof(cwd));
-	TEST_ASSERT_EQUAL_STRING(g_stub_home, cwd);
-	/* tilde was freed/replaced by tilda_helper — don't free again */
+	TEST_ASSERT_EQUAL_STRING(home, cwd);
 }
 
 int	main(void)

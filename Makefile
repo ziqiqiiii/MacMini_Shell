@@ -165,14 +165,15 @@ UNIT_BIN_DIR	:= $(UNIT_DIR)/bin
 
 UNIT_SOURCES	:= $(wildcard $(UNIT_DIR)/test_*.c)
 UNIT_BINS		:= $(UNIT_SOURCES:$(UNIT_DIR)/%.c=$(UNIT_BIN_DIR)/%)
+SHELL_SRCS		:= $(filter-out $(SRC_DIR)/00_main.c, $(wildcard $(SRC_DIR)/*.c))
 
 TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -I./$(LIBFT_DIR)$(INC_DIR) -Wall -Wextra -DUNIT_TEST
 
-$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c | $(LIBFT)
+$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c $(SHELL_SRCS) | $(LIBFT)
 	@mkdir -p $(UNIT_BIN_DIR)
 	@$(CC) $(TEST_CFLAGS) $^ \
-		$(shell find $(SRC_DIR) -name "*$*.c" 2>/dev/null | head -1) \
-		$(LIB) \
+		$(shell find $(SRC_DIR)/system_programs -name "*$*.c" 2>/dev/null) \
+		$(LIB) $(READLINE) \
 		-o $@
 
 TEST_RUNNER := ./scripts/run_tests.sh

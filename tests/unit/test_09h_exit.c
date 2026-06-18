@@ -10,39 +10,6 @@
 
 int	g_exit_status = 0;
 
-/* --- cross-file stubs --- */
-
-int	array2d_len(char **str)
-{
-	int	i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
-
-int	ft_close(int fd)
-{
-	close(fd);
-	return (EXIT_SUCCESS);
-}
-
-void	history_clear(t_history **history)
-{
-	(void)history;
-}
-
-void	del_data(void *content)
-{
-	t_env	*data;
-
-	data = (t_env *)content;
-	free(data->key);
-	free(data->value);
-	free(data);
-}
-
 static t_root	g_sh;
 
 void	setUp(void)

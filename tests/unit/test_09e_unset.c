@@ -10,62 +10,6 @@
 
 int	g_exit_status = 0;
 
-/* --- cross-file stub: del_data from 12_free.c --- */
-
-void	del_data(void *content)
-{
-	t_env	*data;
-
-	data = (t_env *)content;
-	free(data->key);
-	free(data->value);
-	free(data);
-}
-
-/* --- cross-file stubs for env helpers --- */
-
-int	env_link_list(char **envp, t_list **env_list)
-{
-	int		i;
-	t_env	*content;
-	t_list	*node;
-	char	*eq;
-
-	i = 0;
-	while (envp[i])
-	{
-		content = ft_calloc(1, sizeof(t_env));
-		if (!content)
-			return (EXIT_FAILURE);
-		eq = ft_strchr(envp[i], '=');
-		content->key = ft_substr(envp[i], 0, eq - envp[i]);
-		content->value = ft_substr(envp[i], eq - envp[i] + 1,
-						ft_strlen(envp[i]) - (eq - envp[i]));
-		node = ft_lstnew(content);
-		ft_lstadd_back(env_list, node);
-		i++;
-	}
-	return (EXIT_SUCCESS);
-}
-
-char	*existed_env(char *key, t_list **env_list)
-{
-	t_list	*tmp;
-	t_env	*data;
-
-	if (!key)
-		return (NULL);
-	tmp = *env_list;
-	while (tmp)
-	{
-		data = (t_env *)tmp->content;
-		if (ft_strncmp(data->key, key, ft_strlen(key) + 1) == 0)
-			return (data->value);
-		tmp = tmp->next;
-	}
-	return (NULL);
-}
-
 /* --- helpers --- */
 
 static t_list	*g_env;
