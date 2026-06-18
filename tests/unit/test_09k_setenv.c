@@ -46,6 +46,7 @@ static void	test_set_env_returns_failure_for_invalid(void)
 	int		saved;
 	int		ret;
 
+	fflush(stdout);
 	pipe(pipefd);
 	saved = dup(STDOUT_FILENO);
 	dup2(pipefd[1], STDOUT_FILENO);
