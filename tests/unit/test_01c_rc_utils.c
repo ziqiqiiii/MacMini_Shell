@@ -138,6 +138,7 @@ static void	test_set_path_prepends_to_existing(void)
 	new_path = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(new_path);
 	TEST_ASSERT_EQUAL_INT(0, strncmp(new_path, "/my/custom/bin:", 15));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 static void	test_set_path_contains_old_path(void)
@@ -151,6 +152,7 @@ static void	test_set_path_contains_old_path(void)
 	set_path(&sh, "/extra");
 	new_path = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(strstr(new_path, g_saved_path));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 static void	test_set_path_without_existing_path(void)
@@ -164,6 +166,7 @@ static void	test_set_path_without_existing_path(void)
 	result = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(result);
 	TEST_ASSERT_EQUAL_STRING("/only/this", result);
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 int	main(void)
