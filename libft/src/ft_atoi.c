@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ft_atoi.c                                          :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lchew <lchew@student.42kl.edu.my>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/05/24 17:11:03 by lchew             #+#    #+#             */
-/*   Updated: 2022/05/24 17:11:03 by lchew            ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 /*
 **	The ft_atoi() function converts the initial portion of the string pointed to 
 **	by str to int representation.

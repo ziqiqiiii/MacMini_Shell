@@ -1,98 +1,216 @@
-# minishell
-42KL Minishell Project
+# MacMini Shell
 
-File Structure Guide
-- Store all .c program files under "src".
-- Store all .h header files under "includes".
-- All .o object files will be generted under "obj".
-- Libft files are free to modified. Recommended to run a git commit after each modification.
+A POSIX-like shell implemented in C. Supports interactive prompts, command history, pipes, redirections, environment variable expansion, signal handling, and a set of built-in commands.
 
-Working with Git
-***DO NOT WORK DIRECTLY IN MAIN BRANCH***
-1. ```git checkout -b <new branch name> dev```
-   - format follow "YYMMDD-branch_title".
-   - This will create and checkout to a new branch, branching from <dev> branch.
-2. ```git branch -a``` to confirm you are in the correct branch.
-3. Work in your branch.
-4. Once the function tested to be working in your branch, before merging to dev,
-   merge FROM dev into your branch via
-    
-    ```git merge --no-ff main```
-    
-    Resolve all conflicts.
-   Add, commit and push resolved branch.
-5. ```git checkout dev``` to switch to develop branch.
-6. ```git merge --no-ff <your branch>``` - merge your branch into develop branch.
-7. ```git push origin dev```
-8. You may OR may not needed to delete your branch with ```git branch -d <your branch>```.
+---
 
+## Table of Contents
 
-################################################################################
-#                                    UPDATES                                   #
-################################################################################
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Build](#build)
+- [Run](#run)
+- [Built-in Commands](#built-in-commands)
+- [Shell Operators](#shell-operators)
+- [Exit Codes](#exit-codes)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
 
-***Person 1:***
-**Setup the project:**
-Create the project repository.
-Create the necessary files: Makefile, *.h, *.c.
-Write a basic Makefile with the rules $(NAME), all, clean, fclean, and re.
+---
 
-**Basic shell functionality:**
-Write a function to display a prompt that waits for a new command. (Relevant functions: readline, printf)
-Write a function to record and display a working history for the shell. (Relevant functions: add_history, rl_on_new_line)
+## Features
 
-**Executable handling:**
-Write a function to search for the right executable based on the PATH variable. (Relevant functions: getenv, access)
-Write a function to launch the executable using a relative or an absolute path. (Relevant functions: fork, execve)
+- Interactive prompt with command history (readline)
+- Environment variable expansion (`$VAR`, `$?`)
+- Single and double quote handling
+- Redirections: `<`, `>`, `<<` (heredoc), `>>`
+- Pipes (`|`) with full pipeline support
+- Signal handling: `Ctrl-C`, `Ctrl-D`, `Ctrl-\`
+- Built-in commands: `echo`, `cd`, `pwd`, `export`, `unset`, `env`, `history`, `exit`, `help`, `usage`
+- Local binaries in `./bin/` are resolved before system `$PATH`
 
-**Quote and special character handling:**
-Write a function to handle ’ (single quote) correctly.
-Write a function to handle " (double quote) correctly.
-Ensure the shell does not interpret unclosed quotes or special characters such as \ (backslash) or ; (semicolon).
+---
 
-**Built-in commands:**
-Write a function to implement the 'echo' builtin with option -n. (Relevant functions: write)
-Write a function to implement the 'cd' builtin with only a relative or absolute path. (Relevant functions: chdir)
-Write a function to implement the 'pwd' builtin with no options. (Relevant functions: getcwd)
+## Prerequisites
 
-***Person 2:***
-**Global variable:**
-Decide on the purpose of the one allowed global variable.
-Implement the necessary functionality using this global variable.
+### GCC and Make
 
-**Redirections and pipes:**
-Write a function to implement the '<' redirection. (Relevant functions: open, dup2)
-Write a function to implement the '>' redirection. (Relevant functions: open, dup2)
-Write a function to implement the '<<' redirection. (Relevant functions: open, dup2)
-Write a function to implement the '>>' redirection. (Relevant functions: open, dup2)
-Write a function to implement pipes (| character). (Relevant functions: pipe, dup2)
+- **Linux / WSL**: `sudo apt update && sudo apt install build-essential`
+- **macOS**: `brew install gcc`
 
-**Environment variables and exit status:**
-Write a function to handle environment variables ($ followed by a sequence of characters) which should expand to their values. (Relevant functions: getenv)
-Write a function to handle $? which should expand to the exit status of the most recently executed foreground pipeline. (Relevant functions: wait, waitpid)
+### Readline
 
-**Handling of control sequences:**
-Write a function to handle ctrl-C. (Relevant functions: signal)
-Write a function to handle ctrl-D. (Relevant functions: exit)
-Write a function to handle ctrl-\. (Relevant functions: signal)
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt install libreadline-dev
+```
 
-**More built-in commands:**
-Write a function to implement the 'export' builtin with no options. (Relevant functions: setenv)
-Write a function to implement the 'unset' builtin with no options. (Relevant functions: unsetenv)
-Write a function to implement the 'env' builtin with no options or arguments. (Relevant functions: getenv)
-Write a function to implement the 'exit' builtin with no options. (Relevant functions: exit)
+**macOS (Homebrew)**
+```bash
+brew install readline
+```
 
-0: Successful execution. This status indicates that the command or script completed without any errors.
-1: General error. This status is typically used to indicate that an unspecified error occurred.
-2: Misuse of shell built-ins. It is used to indicate that a command was not used correctly.
-126: Command cannot be invoked. This status is used when the command or script is found but cannot be executed.
-127: Command not found. It is used when the command or script is not found or cannot be executed.
-128: Invalid argument to exit. This status is used when the exit command is used incorrectly, specifying an invalid argument.
-130: Script terminated by Control+C. This status is used when a script or command is terminated by the user using the Control+C key combination.
-137: Script terminated by a signal. This status is used when a script or command is terminated by a signal, usually indicating a fatal error.
-255: Exit status out of range. It is used when the exit command is given an exit status that is outside the valid range of 0 to 255.
+**WSL (Windows Subsystem for Linux)**
 
+WSL runs a Linux distribution, so use the same command as Linux:
+```bash
+sudo apt update
+sudo apt install libreadline-dev
+```
 
-echo -nn  -nnnn h
-echo -nnnnn h
-echo -nn -nna hi
+---
+
+## Build
+
+Clone the repository and build with `make`:
+
+```bash
+git clone https://github.com/ziqiqiiii/minishell.git
+cd minishell
+make
+```
+
+This compiles `libft`, all system programs under `./bin/`, and the `minishell` binary.
+
+Other Makefile targets:
+
+| Command      | Description                            |
+|--------------|----------------------------------------|
+| `make`       | Build everything (`make all`)          |
+| `make run`   | Build and launch minishell immediately |
+| `make clean` | Remove object files                    |
+| `make fclean`| Remove object files and binary         |
+| `make re`    | Full rebuild (`fclean` + `all`)        |
+
+---
+
+## Run
+
+```bash
+./minishell
+```
+
+Or build and run in one step:
+
+```bash
+make run
+```
+
+---
+
+## Built-in Commands
+
+| Command              | Description                                      |
+|----------------------|--------------------------------------------------|
+| `echo [-n] [args...]`| Print arguments to stdout; `-n` omits newline    |
+| `cd [path\|'-']`      | Change directory; defaults to `$HOME`; `-` goes to `$OLDPWD` |
+| `pwd`                | Print current working directory                  |
+| `export [name=value]`| Set or display environment variables             |
+| `unset [name]`       | Remove environment variables                     |
+| `env`                | Print all environment variables                  |
+| `history`            | Print command history                            |
+| `exit [n]`           | Exit shell with status `n`                       |
+| `help`               | List all built-in commands                       |
+| `usage [builtin]`    | Show detailed help for a built-in command        |
+
+---
+
+## Shell Operators
+
+| Operator | Description                          |
+|----------|--------------------------------------|
+| `\|`      | Pipe stdout of left to stdin of right |
+| `<`      | Redirect stdin from file             |
+| `>`      | Redirect stdout to file (overwrite)  |
+| `>>`     | Redirect stdout to file (append)     |
+| `<<`     | Heredoc — read stdin until delimiter |
+
+---
+
+## Exit Codes
+
+| Code | Meaning                          |
+|------|----------------------------------|
+| `0`  | Success                          |
+| `1`  | General error                    |
+| `2`  | Misuse of shell built-ins        |
+| `126`| Command found but cannot execute |
+| `127`| Command not found                |
+| `128`| Invalid argument to `exit`       |
+| `130`| Terminated by `Ctrl-C`           |
+| `137`| Terminated by signal             |
+| `255`| Exit status out of range         |
+
+---
+
+## Architecture
+
+Input flows through these pipeline stages:
+
+```
+readline input
+     │
+     ▼
+  Expander          expand $VAR and $? before tokenising
+     │
+     ▼
+   Lexer            tokenise into COMMAND / PIPE / RDIN / RDOUT / RDAPP / HEREDOC
+     │
+     ▼
+   Parser           build a binary syntax tree (BST)
+     │
+     ▼
+  Executor          recurse the BST and dispatch to:
+     ├── Pipe handler
+     ├── Redirection handler  (< > >> <<)
+     └── Built-in / execve
+```
+
+One global variable `g_exit_status` tracks the most recent foreground pipeline exit code.
+
+---
+
+## Project Structure
+
+```
+minishell/
+├── src/           Source files (numbered by pipeline stage)
+├── includes/      Header files (minishell.h)
+├── libft/         Custom C standard library
+├── bin/           Local binaries resolved ahead of $PATH
+├── tests/
+│   ├── unit/          Unity-based unit tests
+│   ├── integration/   Shell script integration tests
+│   └── unity/         Unity test framework
+├── scripts/       Helper scripts (e.g. AI unit test generator)
+├── obj/           Compiled object files (generated)
+└── Makefile
+```
+
+---
+
+## Testing
+
+```bash
+make unit          # run unit tests (Unity framework)
+make integration   # run integration shell scripts
+make test          # run both
+```
+
+### Filtering tests
+
+Use `FILTER` to run only tests whose path contains a given substring:
+
+```bash
+make unit FILTER=lexer         # only tests matching "lexer"
+make unit FILTER=09             # all builtin tests (09a–09l)
+make integration FILTER=system  # only integration scripts matching "system"
+```
+
+### Generating unit tests with AI
+
+```bash
+make ai-unit-tests MODULE=<name>
+# e.g. make ai-unit-tests MODULE=expand
+```

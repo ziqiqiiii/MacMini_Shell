@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   minishell.h                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lchew <lchew@student.42kl.edu.my>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/05/23 14:28:46 by lchew             #+#    #+#             */
-/*   Updated: 2023/08/02 18:17:56 by lchew            ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
@@ -19,7 +7,7 @@
 									getcwd,isatty, open, pipe, read, unlink,
 									write, execve, ttyname, ttyslot, opendir,
 									readdir, closedir */
-# include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
+#  include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
 									rl_replace_line, rl_redisplay,
 									add_history */
 # include <readline/history.h>
@@ -32,6 +20,10 @@
 # include <sys/ioctl.h>			/* ioctl */
 # include <curses.h>			/* tgetent, tgetflag, tgetnum, tgetstr, tgoto,
 									tputs */
+# include <limits.h> 			/* PATH_MAX */
+# include <string.h>
+# include <fcntl.h>				/* open flags */
+# include <libgen.h>			/* dirname */
 
 # include "libft.h"
 # include "get_next_line.h"
@@ -62,6 +54,13 @@
 # define DOLLAR			'$'
 
 extern int	g_exit_status;
+
+typedef enum e_rc_line_type
+{
+	RC_LINE_EMPTY = 0,
+	RC_LINE_PATH,
+	RC_LINE_COMMAND
+}	t_rc_line_type;
 
 typedef struct s_history
 {
@@ -125,6 +124,18 @@ typedef struct s_expand_var
 	int		len;
 }	t_expand_var;
 
+typedef struct s_usage
+{
+    const char  *name;
+    const char  *detail;
+}   t_usage;
+
+typedef struct s_help
+{
+    const char  *name;
+    const char  *desc;
+}   t_help;
+
 typedef struct s_root
 {
 	t_history		*history;
@@ -138,111 +149,145 @@ typedef struct s_root
 	struct termios	current;
 	int				heredoc_flag;
 	int				exit_cmd_flag;
+	char			*current_dir;
 }	t_root;
 
-/* 01_PROMPT */
 
-void		prompt(t_root *sh, char **envp);
+/* 01_INIT */
 
-/* 02_EXPAND */
+int					init_root(t_root *sh, char **envp);
 
-char		*expand(char *cmd, t_list **env_list);
-void		single_quote(t_expand_var *data);
-void		join_dollar_ptr(t_expand_var *data, t_list **env_list);
-void		replace_exit_status(t_expand_var *data);
-char		*sub_or_join(char *cmd, char *start, int len, char *substring);
-char		*key_check(char *input);
+/* 01_RC */
 
-/* 03_LEXER */
+void				source_rc(t_root *sh, char **envp);
+void				get_rc_paths(t_root *sh, char *rc_path, char *home_path);
+void				run_rc(int fd, t_root *sh, char **envp);
+void				create_empty_rc(const char *path);
+t_rc_line_type	    classify_rc_line(const char *line, const char **value_out);
+void				exec_rc_cmd(t_root *sh, char **envp, char *line);
+void				set_path(t_root *sh, const char *value);
 
-t_list		*lexer(char *cmd);
-int			count_token(char *cmd);
-int			count_sp_char(char *cmd);
-int			count_char(char *cmd);
-void		cmd_modifier(char *cmd, char **tokens);
+/* 01_BANNER */
 
-/* 04_PARSER */
+void				print_banner(t_root *sh);
 
-t_tree		*parser(t_list *lexer, int n_token, t_root *sh);
-t_tree		*tree_node_new(t_token type, char *value, \
+
+/* 02_PROMPT */
+
+void				prompt(t_root *sh, char **envp);
+
+/* 03_EXPAND */
+
+char				*expand(char *cmd, t_list **env_list);
+void				single_quote(t_expand_var *data);
+void				join_dollar_ptr(t_expand_var *data, t_list **env_list);
+void				replace_exit_status(t_expand_var *data);
+char				*sub_or_join(char *cmd, char *start, int len, char *substring);
+char				*key_check(char *input);
+
+/* 04_LEXER */
+
+t_list				*lexer(char *cmd);
+int					count_token(char *cmd);
+int					count_sp_char(char *cmd);
+int					count_char(char *cmd);
+void				cmd_modifier(char *cmd, char **tokens);
+
+/* 05_PARSER */
+
+t_tree				*parser(t_list *lexer, int n_token, t_root *sh);
+t_tree				*tree_node_new(t_token type, char *value, \
 							t_tree *left, t_tree *right);
-void		print_tree(t_tree *root, int b);
+void				print_tree(t_tree *root, int b);
 
-/* 05_EXECUTE */
+/* 06_EXECUTE */
 
-void		recurse_bst(t_tree *node, char **envp, t_root *sh);
-char		**cmd_join(char **res, t_root *sh);
-char		**find_path(t_list **env_list);
-char		*join_path(t_list **env_list, char *cmd);
-char		*get_exe_path(char *argv, t_list **env_list);
+void				recurse_bst(t_tree *node, char **envp, t_root *sh);
+char				**cmd_join(char **res, t_root *sh);
+char				**find_path(t_list **env_list);
+char				*join_path(t_list **env_list, char *cmd);
+char				*get_exe_path(char *argv, t_list **env_list);
 
-/* 06_PIPE */
+/* 07_PIPE */
 
-void		pipe_handler(t_tree *node, char **envp, t_root *sh);
+void				pipe_handler(t_tree *node, char **envp, t_root *sh);
 
-/* 07_REDIRECTION */
+/* 08_REDIRECTION */
 
-void		rdin_handler(t_tree *node, char **envp, t_root *sh);
-void		rdout_handler(t_tree *node, char **envp, t_root *sh);
-void		rdapp_handler(t_tree *node, char **envp, t_root *sh);
-void		heredoc_handler(t_tree *node, char **envp, t_root *sh);
-int			rdin_fd(char *node_value, t_root *sh);
-int			rdout_fd(char *node_value, t_root *sh);
-int			rdapp_fd(char *node_value, t_root *sh);
-char		*find_file(char *value);
-int			heredoc_fd(char *node_value, t_root *sh);
+void				rdin_handler(t_tree *node, char **envp, t_root *sh);
+void				rdout_handler(t_tree *node, char **envp, t_root *sh);
+void				rdapp_handler(t_tree *node, char **envp, t_root *sh);
+void				heredoc_handler(t_tree *node, char **envp, t_root *sh);
+int					rdin_fd(char *node_value, t_root *sh);
+int					rdout_fd(char *node_value, t_root *sh);
+int					rdapp_fd(char *node_value, t_root *sh);
+char				*find_file(char *value);
+int					heredoc_fd(char *node_value, t_root *sh);
 
-/* 08_BUILTIN */
+/* 09_BUILTIN */
 
-int			builtin(char **cmd, t_root *sh);
-int			echo_command(char **cmd);
-int			cd(char **value, t_list **env_list);
-int			pwd(void);
-int			export(char **cmd, t_list **env_list);
-int			invalid_identifier(char *input);
-int			unset(char **key, t_list **env_list);
-int			get_env(t_list **env_list);
-int			env_link_list(char **envp, t_list **env_list);
-char		*existed_env(char *key, t_list **env_list);
-void		creat_new_env_node(char *key, char	*input, t_list **env_list);
-t_history	*history_node_new(int index, void *cmd);
-void		history_clear(t_history **history);
-void		history_add(t_history **history, char *cmd);
-int			history_print(t_history *history);
-int			exit_status(int status);
-int			exit_command(char **cmd, t_root *sh);
-void		exit_prompt(t_root *sh);
+int					builtin(char **cmd, t_root *sh);
+int					echo_command(char **cmd);
+int					cd(char **value, t_list **env_list);
+int					pwd(void);
+int					get_pwd(char cwd[256]);
+int					export(char **cmd, t_list **env_list);
+int					invalid_identifier(char *input);
+int					unset(char **key, t_list **env_list);
+int					get_env(t_list **env_list);
+int					env_link_list(char **envp, t_list **env_list);
+char				*existed_env(char *key, t_list **env_list);
+void				creat_new_env_node(char *key, char	*input, t_list **env_list);
+t_history			*history_node_new(int index, void *cmd);
+void				history_clear(t_history **history);
+void				history_add(t_history **history, char *cmd);
+int					history_print(t_history *history);
+int					exit_status(int status);
+int					exit_command(char **cmd, t_root *sh);
+void				exit_prompt(t_root *sh);
+int					usage(char **cmd);
+int					help(void);
+int					set_env(char **cmd, t_list **env_list);
+int					unset_env(char **cmd, t_list **env_list);
 
-/* 09_QUOTE */
+/* 10_QUOTE */
 
-char		**cmd_quote_handler(char const *s, char c);
-int			is_quote(char c);
-int			quote_count(char *cmd);
-char		*remove_quote(char *str);
+char				**cmd_quote_handler(char const *s, char c);
+int					is_quote(char c);
+int					quote_count(char *cmd);
+char				*remove_quote(char *str);
 
-/* 10_SIGNAL */
+/* 11_SIGNAL */
 
-void		signals(int mode);
+void				shell_ignore_signals(void);
+void				child_restore_signals(void);
+void				heredoc_restore_signals(void);
+void				sigint_ignore(struct sigaction *old);
+void				sigint_restore(struct sigaction *old);
 
-/* 11_FREE */
+/* 12_FREE */
 
-void		del_data(void	*content);
-void		reset_data(t_root *sh, t_list **cmd_lexer, t_tree **head);
-void		free_2d(char **str);
-void		free_tree(t_tree *node);
+void				del_data(void	*content);
+void				reset_data(t_root *sh, t_list **cmd_lexer, t_tree **head);
+void				free_2d(char **str);
+void				free_tree(t_tree *node);
 
-/* 12_MINISHELL_UTILS */
+/* 13_MINISHELL_UTILS */
 
-int			ft_pipe(int p[2]);
-int			ft_open(const char *file, int flags, int permission);
-int			ft_fork(void);
-int			ft_close(int fd);
-int			ft_dup2(int new_fd, int old_fd);
-int			ft_tcgetattr(int fd, struct termios *termios_p);
-int			ft_tcsetattr(int fd, int optional_actions, \
+int					ft_pipe(int p[2]);
+int					ft_dup2(int new_fd, int old_fd);
+int					ft_open(const char *file, int flags, int permission);
+int					ft_close(int fd);
+
+int					ft_fork(void);
+void 				ft_kill(int pid);
+int					ft_tcgetattr(int fd, struct termios *termios_p);
+int					ft_tcsetattr(int fd, int optional_actions, \
 							struct termios *termios_p);
-int			array2d_len(char **str);
-void		str_to_lower(char **str);
-void		print_exec_cmd(char **cmd);
+
+int					array2d_len(char **str);
+void				str_to_lower(char **str);
+void				print_exec_cmd(char **cmd);
+char				*get_current_directory(void);
 
 #endif
