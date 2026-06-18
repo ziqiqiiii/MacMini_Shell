@@ -36,6 +36,10 @@
 *.x86_64
 *.hex
 
+# Build output directories
+bin/
+tests/unit/bin/
+
 # Debug files
 *.dSYM/
 *.su
@@ -56,7 +60,7 @@ dkms.conf
 .dist/
 
 # Program files
-minishell
+macmini_shell
 *.tmp*
 .txt
 tmp/
