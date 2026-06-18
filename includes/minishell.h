@@ -223,6 +223,7 @@ int			builtin(char **cmd, t_root *sh);
 int			echo_command(char **cmd);
 int			cd(char **value, t_list **env_list);
 int			pwd(void);
+int			get_pwd(char cwd[256]);
 int			export(char **cmd, t_list **env_list);
 int			invalid_identifier(char *input);
 int			unset(char **key, t_list **env_list);

@@ -12,12 +12,19 @@ int	pwd(void)
 {
 	char	cwd[256];
 
-	if (getcwd(cwd, sizeof(cwd)) == NULL)
+	if (get_pwd(cwd))
+		return (EXIT_FAILURE);
+	else
+		printf("%s\n", cwd);
+	return (EXIT_SUCCESS);
+}
+
+int	get_pwd(char cwd[256])
+{
+	if (getcwd(cwd, 256) == NULL)
 	{
 		perror("pwd: ");
 		return (EXIT_FAILURE);
 	}
-	else
-		printf("%s\n", cwd);
 	return (EXIT_SUCCESS);
 }
