@@ -53,7 +53,13 @@ run_unit() {
       /^[0-9]/ { printf "\n%s  %s%s\n\n", cyn, $0, rst }
       { print "  " $0 }
     '
-    if [ "$rc" -eq 0 ]; then pass=$((pass+1)); else fail=$((fail+1)); fi
+    if [ "$rc" -eq 0 ]; then
+      pass=$((pass+1))
+    else
+      fail=$((fail+1))
+      echo "  ${RED}^^^ FAILED: ${t} (exit code ${rc})${RST}"
+      echo ""
+    fi
   done
   if [ -n "$FILTER" ] && [ "$skipped" -gt 0 ]; then
     echo "${CYN}($skipped test(s) skipped by FILTER=\"${FILTER}\")${RST}"
@@ -69,14 +75,40 @@ run_integration() {
       skipped=$((skipped+1))
       continue
     fi
+    echo ""
     echo "${YEL}--- ${s} ---${RST}"
     output=$(bash "$s" 2>&1) && rc=0 || rc=$?
     echo "$output" | awk -v grn="$GRN" -v red="$RED" -v rst="$RST" -v cyn="$CYN" '
-      /^PASS: / { printf "  %-55s %sPASS%s\n\n", substr($0, 7), grn, rst; next }
-      /^FAIL: / { printf "  %-55s %sFAIL%s\n\n", substr($0, 7), red, rst; next }
+      /^PASS: / || /^FAIL: / {
+        if ($0 ~ /^PASS:/) { tag = "PASS"; clr = grn } else { tag = "FAIL"; clr = red }
+        d = substr($0, 7)
+        if (length(d) <= 50) {
+          printf "  %-50s %s%s%s\n", d, clr, tag, rst
+        } else {
+          n = split(d, words, " ")
+          line = ""
+          for (i = 1; i <= n; i++) {
+            tl = (line == "" ? words[i] : line " " words[i])
+            if (length(tl) > 50 && line != "") {
+              printf "  %s\n", line
+              line = words[i]
+            } else {
+              line = tl
+            }
+          }
+          printf "  %-50s %s%s%s\n", line, clr, tag, rst
+        }
+        next
+      }
       { print }
     '
-    if [ "$rc" -eq 0 ]; then pass=$((pass+1)); else fail=$((fail+1)); fi
+    if [ "$rc" -eq 0 ]; then
+      pass=$((pass+1))
+    else
+      fail=$((fail+1))
+      echo "  ${RED}^^^ FAILED: ${s} (exit code ${rc})${RST}"
+      echo ""
+    fi
   done
   if [ -n "$FILTER" ] && [ "$skipped" -gt 0 ]; then
     echo "${CYN}($skipped test(s) skipped by FILTER=\"${FILTER}\")${RST}"
