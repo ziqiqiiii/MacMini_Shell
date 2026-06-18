@@ -152,13 +152,16 @@ static void test_lexer_simple_command(void)
 	char	*tokens[8];
 	t_list	*head;
 	int		n;
+	char	*input;
 
-	head = lexer(ft_strdup("echo hello"));
+	input = ft_strdup("echo hello");
+	head = lexer(input);
 	TEST_ASSERT_NOT_NULL(head);
 	n = collect(head, tokens, 8);
 	TEST_ASSERT_EQUAL_INT(1, n);
 	TEST_ASSERT_EQUAL_STRING("echo hello", tokens[0]);
 	ft_lstclear(&head, free);
+	free(input);
 }
 
 static void test_lexer_pipe(void)
@@ -166,8 +169,10 @@ static void test_lexer_pipe(void)
 	char	*tokens[8];
 	t_list	*head;
 	int		n;
+	char	*input;
 
-	head = lexer(ft_strdup("ls | grep foo"));
+	input = ft_strdup("ls | grep foo");
+	head = lexer(input);
 	TEST_ASSERT_NOT_NULL(head);
 	n = collect(head, tokens, 8);
 	TEST_ASSERT_EQUAL_INT(3, n);
@@ -175,6 +180,7 @@ static void test_lexer_pipe(void)
 	TEST_ASSERT_EQUAL_STRING("|", tokens[1]);
 	TEST_ASSERT_EQUAL_STRING("grep foo", tokens[2]);
 	ft_lstclear(&head, free);
+	free(input);
 }
 
 static void test_lexer_redirect_out(void)
@@ -182,13 +188,16 @@ static void test_lexer_redirect_out(void)
 	char	*tokens[8];
 	t_list	*head;
 	int		n;
+	char	*input;
 
-	head = lexer(ft_strdup("echo hi > out.txt"));
+	input = ft_strdup("echo hi > out.txt");
+	head = lexer(input);
 	TEST_ASSERT_NOT_NULL(head);
 	n = collect(head, tokens, 8);
 	TEST_ASSERT_EQUAL_INT(2, n);
 	TEST_ASSERT_EQUAL_STRING("echo hi", tokens[0]);
 	ft_lstclear(&head, free);
+	free(input);
 }
 
 static void test_lexer_null_returns_null(void)
@@ -206,12 +215,15 @@ static void test_lexer_heredoc(void)
 	char	*tokens[8];
 	t_list	*head;
 	int		n;
+	char	*input;
 
-	head = lexer(ft_strdup("cat << EOF"));
+	input = ft_strdup("cat << EOF");
+	head = lexer(input);
 	TEST_ASSERT_NOT_NULL(head);
 	n = collect(head, tokens, 8);
 	TEST_ASSERT_EQUAL_INT(2, n);
 	ft_lstclear(&head, free);
+	free(input);
 }
 
 int main(void)

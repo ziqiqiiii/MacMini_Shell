@@ -42,8 +42,16 @@ run_unit() {
     echo "$output" | awk -v grn="$GRN" -v red="$RED" -v rst="$RST" -v cyn="$CYN" -F: '
       /^-{3,}/ || /^OK$/ || /^FAIL$/ { next }
       NF >= 4 && $4 == "PASS" { printf "  %-50s %sPASS%s\n", $3, grn, rst; next }
-      NF >= 4 && $4 == "FAIL" { printf "  %-50s %sFAIL%s\n", $3, red, rst; next }
+      NF >= 4 && $4 == "FAIL" {
+        detail = ""
+        for (i = 5; i <= NF; i++) detail = detail (i > 5 ? ":" : "") $i
+        printf "  %-50s %sFAIL%s\n", $3, red, rst
+        if (detail != "") printf "    %s→ %s:%s:%s%s\n", red, $1, $2, detail, rst
+        next
+      }
+      /^[0-9]+.*Tests.*Failures.*Ignored/ { next }
       /^[0-9]/ { printf "\n%s  %s%s\n\n", cyn, $0, rst }
+      { print "  " $0 }
     '
     if [ "$rc" -eq 0 ]; then pass=$((pass+1)); else fail=$((fail+1)); fi
   done
