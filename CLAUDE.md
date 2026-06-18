@@ -25,6 +25,13 @@ make integration   # run shell-script integration tests in tests/integration/
 make test          # run both
 ```
 
+Filter tests by substring with `FILTER`:
+```bash
+make unit FILTER=lexer         # only tests matching "lexer"
+make unit FILTER=09             # all builtin tests (09a–09l)
+make integration FILTER=system  # only integration scripts matching "system"
+```
+
 Run a single unit test binary directly after building:
 ```bash
 make unit && ./tests/unit/bin/test_09a_echo
@@ -80,10 +87,9 @@ Unit tests use the [Unity](https://github.com/ThrowTheSwitch/Unity) framework (`
 
 - Test files: `tests/unit/test_<module>.c`
 - Compiled binaries: `tests/unit/bin/test_<module>`
-- The Makefile pattern rule links each test with its source file via `find src -name "*<module>.c"`.
-- **Do not include `minishell.h`** in unit tests — readline/curses are not linked. Use `extern` declarations and `typedef struct s_X t_X;` stubs instead.
+- The Makefile links **all shell source files** (except `00_main.c`), `libft.a`, and `-lreadline` into each test binary. Every function declared in `minishell.h` is available — **do not write stubs** for shell or libft functions.
+- Include `minishell.h` in unit tests to get all type definitions and function declarations.
 - Define `int g_exit_status = 0;` in each test file to satisfy the linker.
-- Stub any libft helpers needed (e.g. `ft_strlen`, `ft_strncmp`) with thin wrappers over standard C equivalents.
 - `setUp()` and `tearDown()` must always be defined even if empty.
 - Test functions: `static void`, named `test_<what>_<expected>()`.
 - Capture stdout via `pipe()` + `dup2()` when testing functions that write to fd 1.

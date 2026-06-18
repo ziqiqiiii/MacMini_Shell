@@ -198,7 +198,17 @@ make integration   # run integration shell scripts
 make test          # run both
 ```
 
-Generate unit tests for a module with AI assistance:
+### Filtering tests
+
+Use `FILTER` to run only tests whose path contains a given substring:
+
+```bash
+make unit FILTER=lexer         # only tests matching "lexer"
+make unit FILTER=09             # all builtin tests (09a–09l)
+make integration FILTER=system  # only integration scripts matching "system"
+```
+
+### Generating unit tests with AI
 
 ```bash
 make ai-unit-tests MODULE=<name>
