@@ -57,7 +57,8 @@ SRC			:= $(addsuffix .c, \
 					00_main \
 					01a_init\
 					01b_rc\
-					01c_banner\
+					01c_rc_utils\
+					01d_banner\
 					02_prompt\
 					03_expand\
 					03a_expand_utils\
