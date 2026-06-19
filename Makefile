@@ -80,7 +80,7 @@ SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
 all: $(NAME) system-programs
 
 run: all
-	@ ./$(NAME)
+	@ LSAN_OPTIONS=suppressions=readline.supp ./$(NAME)
 
 # --- shell object rule (ASan-instrumented, mirrors src/ tree under obj/) -----
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

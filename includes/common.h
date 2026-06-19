@@ -34,12 +34,11 @@
 /* Renders a stat(2) mode into an "ls -l" style permission string. */
 void	perms_to_string(mode_t mode, char str[11]);
 
-/* Absolute path of the project root, resolved from /proc/self/exe. */
-extern char	project_root[PATH_MAX];
+/* Resolves the project root from /proc/self/exe; returns a malloc'd string. */
 char	*resolve_project_root(void);
 
 /* Daemonization + logging for the long-running system programs. */
 void	spawn_daemon(void);
-void	daemon_log(const char *msg);
+void	daemon_log(const char *project_root, const char *msg);
 
 #endif

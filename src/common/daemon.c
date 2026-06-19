@@ -51,9 +51,10 @@ void	spawn_daemon(void)
  * Writes to <project_root>/tmp/dspawn.log, taking an exclusive flock(2) while
  * appending so concurrent daemons do not interleave their lines.
  *
- * @param msg Message string to record in the log.
+ * @param project_root Absolute path of the project root.
+ * @param msg          Message string to record in the log.
  */
-void	daemon_log(const char *msg)
+void	daemon_log(const char *project_root, const char *msg)
 {
 	char	log_path[PATH_MAX];
 	int		fd;

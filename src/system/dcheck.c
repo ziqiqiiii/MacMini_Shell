@@ -8,7 +8,7 @@
  * timestamp, and whether the process is still alive (checked via /proc/<pid>).
  * Prints a summary count of active daemons at the end.
  */
-void dcheck(void) {
+void dcheck(const char *project_root) {
         char reg_path[PATH_MAX];
         strncpy(reg_path, project_root, sizeof(reg_path) - 1);
         strncat(reg_path, "/tmp/daemons.reg",
@@ -58,7 +58,7 @@ void dcheck(void) {
  * and PID. All entries are shown as inactive. Prints a count of buried daemons
  * at the end.
  */
-void dcheck_graveyard(void) {
+void dcheck_graveyard(const char *project_root) {
         char reg_path[PATH_MAX];
         strncpy(reg_path, project_root, sizeof(reg_path) - 1);
         strncat(reg_path, "/tmp/cematary.reg",
@@ -109,9 +109,11 @@ int main(int argc, char **argv) {
         (void)argc;
         (void)argv;
 
-        resolve_project_root();
-        dcheck();
-        dcheck_graveyard();
+        char *project_root = resolve_project_root();
 
+        dcheck(project_root);
+        dcheck_graveyard(project_root);
+
+        free(project_root);
         return 0;
 }

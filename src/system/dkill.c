@@ -16,7 +16,7 @@ typedef struct {
  *
  * @param rip Struct containing the name, PID, and timestamp of the daemon.
  */
-void add_to_graveyard(DaemonInfo rip) {
+void add_to_graveyard(const char *project_root, DaemonInfo rip) {
         char reg_path[PATH_MAX];
         strncpy(reg_path, project_root, sizeof(reg_path) - 1);
         // just like in pet cematary, try not to respawn it lol
@@ -70,7 +70,7 @@ void add_to_graveyard(DaemonInfo rip) {
  * kill all, or '0' to cancel. Killed daemons are added to the graveyard and
  * the registry is cleared when all are terminated.
  */
-void dkill(void) {
+void dkill(const char *project_root) {
         char reg_path[PATH_MAX];
         strncpy(reg_path, project_root, sizeof(reg_path) - 1);
         strncat(reg_path, "/tmp/daemons.reg",
@@ -135,7 +135,7 @@ void dkill(void) {
                                 printf("Killed %-12s (PID %d)\n",
                                        daemons[i].name, daemons[i].pid);
                                 DaemonInfo toinsert = daemons[i];
-                                add_to_graveyard(toinsert);
+                                add_to_graveyard(project_root, toinsert);
                         } else {
                                 perror("kill");
                         }
@@ -149,7 +149,7 @@ void dkill(void) {
                                 printf("Killed %-12s (PID %d)\n",
                                        daemons[idx].name, daemons[idx].pid);
                                 DaemonInfo toinsert = daemons[idx];
-                                add_to_graveyard(toinsert);
+                                add_to_graveyard(project_root, toinsert);
                         } else {
                                 perror("kill");
                         }
@@ -172,8 +172,10 @@ int main(int argc, char **argv) {
         (void)argc;
         (void)argv;
 
-        resolve_project_root();
-        dkill();
+        char *project_root = resolve_project_root();
 
+        dkill(project_root);
+
+        free(project_root);
         return 0;
 }

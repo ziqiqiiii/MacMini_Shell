@@ -35,17 +35,19 @@ int main(int argc, char **argv) {
         (void)argc;
         (void)argv;
 
-        resolve_project_root();
+        char *project_root = resolve_project_root();
 
         const char *backup_path = getenv("BACKUP_DIR");
         if (!backup_path) {
                 fprintf(stderr, "BACKUP_DIR not set");
+                free(project_root);
                 return 1;
         }
 
         struct stat st;
         if (stat(backup_path, &st) == -1) {
                 perror("stat");
+                free(project_root);
                 return 1;
         }
 
@@ -91,9 +93,12 @@ int main(int argc, char **argv) {
                 }
         } else {
                 perror("fork tar");
+                free(archive_path);
+                free(project_root);
                 return 1;
         }
 
         free(archive_path);
+        free(project_root);
         return 0;
 }

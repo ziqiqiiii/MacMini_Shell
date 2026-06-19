@@ -27,7 +27,7 @@ typedef struct PlantSpace {
  * @param name Name of the plant daemon to lock.
  * @return 1 if the lock was acquired, 0 if already held by another process.
  */
-int plant_lock(const char *name) {
+int plant_lock(const char *project_root, const char *name) {
 	size_t len =
 		snprintf(NULL, 0, "%s/tmp/plant_%s.lock", project_root, name) + 1;
 	char *lock = malloc(len);
@@ -124,7 +124,7 @@ void spawn_plant(void) {
  *
  * @param name Name of the plant daemon that was spawned.
  */
-void daemon_spawn_log(const char *name) {
+void daemon_spawn_log(const char *project_root, const char *name) {
 	char log_path[PATH_MAX];
 	strncpy(log_path, project_root, sizeof(log_path) - 1);
 	strncat(log_path, "/tmp/dspawn.log",
@@ -151,7 +151,7 @@ void daemon_spawn_log(const char *name) {
  * @param name Daemon name to look up.
  * @return 1 if the name is found in the registry, 0 otherwise.
  */
-int is_daemon_registered(const char *name) {
+int is_daemon_registered(const char *project_root, const char *name) {
 	char reg_path[PATH_MAX];
 	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
 	strncat(reg_path, "/tmp/daemons.reg",
@@ -187,8 +187,8 @@ int is_daemon_registered(const char *name) {
  *
  * @param name Name to register for the current daemon process.
  */
-void daemon_register(const char *name) {
-	if (is_daemon_registered(name)) {
+void daemon_register(const char *project_root, const char *name) {
+	if (is_daemon_registered(project_root, name)) {
 		fprintf(stderr, "daemon name: %s already registered\n", name);
 		return;
 	}
@@ -226,7 +226,7 @@ void daemon_register(const char *name) {
  * @param plant Pointer to the PlantStats struct to initialize and persist.
  * @return 0 on success, -1 if the state file cannot be opened.
  */
-int plant_init_state(const char *name, PlantStats *plant) {
+int plant_init_state(const char *project_root, const char *name, PlantStats *plant) {
 	plant->waterlevel = 100;
 	plant->health = 100;
 	plant->level = 1;
@@ -264,7 +264,7 @@ int plant_init_state(const char *name, PlantStats *plant) {
  * @param name  Name of the plant (determines the state file path).
  * @param plant Pointer to the PlantStats struct to write.
  */
-void plant_save(const char *name, const PlantStats *plant) {
+void plant_save(const char *project_root, const char *name, const PlantStats *plant) {
 	size_t len =
 		snprintf(NULL, 0, "%s/tmp/%s.state", project_root, name) + 1;
 	char *state_path = malloc(len);
@@ -297,7 +297,7 @@ void plant_save(const char *name, const PlantStats *plant) {
  * @param plant Pointer to the PlantStats struct to populate.
  * @return 0 if the state was read successfully, -1 otherwise.
  */
-int plant_load(const char *name, PlantStats *plant) {
+int plant_load(const char *project_root, const char *name, PlantStats *plant) {
 	size_t len =
 		snprintf(NULL, 0, "%s/tmp/%s.state", project_root, name) + 1;
 	char *state_path = malloc(len);
@@ -332,7 +332,7 @@ int plant_load(const char *name, PlantStats *plant) {
  *
  * @param name Name of the plant to water.
  */
-void plant_water(const char *name) {
+void plant_water(const char *project_root, const char *name) {
 	size_t len =
 		snprintf(NULL, 0, "%s/tmp/%s.state", project_root, name) + 1;
 	char *state_path = malloc(len);
@@ -364,7 +364,7 @@ void plant_water(const char *name) {
 	plant.last_updated = now;
 
 	// save the new state
-	plant_save(name, &plant);
+	plant_save(project_root, name, &plant);
 
 	printf("Successfully watered %s successfully!\nWater state at %d!\n",
 	       name, plant.waterlevel);
@@ -380,7 +380,7 @@ void plant_water(const char *name) {
  * @param plantname Name of the plant daemon to check.
  * @return 1 if an active process is found, 0 otherwise.
  */
-int is_plant_running(const char *plantname) {
+int is_plant_running(const char *project_root, const char *plantname) {
 	char reg_path[PATH_MAX];
 	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
 	strncat(reg_path, "/tmp/daemons.reg",
@@ -431,7 +431,7 @@ typedef struct {
  *
  * @param rip Struct containing the name, PID, and original timestamp of the daemon.
  */
-void add_to_graveyard(DaemonInfo rip) {
+void add_to_graveyard(const char *project_root, DaemonInfo rip) {
 	char reg_path[PATH_MAX];
 	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
 	// just like in pet cematary, try not to respawn it lol
@@ -487,7 +487,7 @@ void add_to_graveyard(DaemonInfo rip) {
  *
  * @param name Name of the daemon(s) to terminate.
  */
-void dkill_auto(const char *name) {
+void dkill_auto(const char *project_root, const char *name) {
 	char reg_path[PATH_MAX];
 	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
 	strncat(reg_path, "/tmp/daemons.reg",
@@ -542,7 +542,7 @@ void dkill_auto(const char *name) {
 			printf("Killed %-12s (PID %d)\n", daemons[i].name,
 			       daemons[i].pid);
 			DaemonInfo toinsert = daemons[i];
-			add_to_graveyard(toinsert);
+			add_to_graveyard(project_root, toinsert);
 		} else {
 			perror("kill");
 		}
@@ -557,9 +557,9 @@ void dkill_auto(const char *name) {
  *
  * @param name Name of the plant that has died.
  */
-void plant_died(const char *name) {
-	daemon_log("HP has hit 0, plant has died");
-	daemon_log("Natural plant death, died from hitting HP 0");
+void plant_died(const char *project_root, const char *name) {
+	daemon_log(project_root, "HP has hit 0, plant has died");
+	daemon_log(project_root, "Natural plant death, died from hitting HP 0");
 
 	if (plant_lock_fd != -1) {
 		flock(plant_lock_fd, LOCK_UN);
@@ -579,7 +579,7 @@ void plant_died(const char *name) {
 	}
 
 	printf("running dkill_auto");
-	dkill_auto(name);
+	dkill_auto(project_root, name);
 
 	exit(EXIT_SUCCESS);
 }
@@ -595,12 +595,12 @@ void plant_died(const char *name) {
  *
  * @param name Name of the plant this daemon manages.
  */
-void daemon_work(const char *name) {
+void daemon_work(const char *project_root, const char *name) {
 	PlantStats plant;
-	if (plant_load(name, &plant) != 0) {
-		daemon_log("Initializing new plant state");
-		if (plant_init_state(name, &plant) != 0) {
-			daemon_log("Initializing new plant state");
+	if (plant_load(project_root, name, &plant) != 0) {
+		daemon_log(project_root, "Initializing new plant state");
+		if (plant_init_state(project_root, name, &plant) != 0) {
+			daemon_log(project_root, "Initializing new plant state");
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -627,12 +627,12 @@ void daemon_work(const char *name) {
 				plant.level++;
 
 			plant.last_updated = now;
-			plant_save(name, &plant);
-			daemon_log("one plant cycle, state updated");
+			plant_save(project_root, name, &plant);
+			daemon_log(project_root, "one plant cycle, state updated");
 		}
 
 		if (plant.health <= 0) {
-			plant_died(name);
+			plant_died(project_root, name);
 		}
 
 		sleep(10);
@@ -649,8 +649,8 @@ void daemon_work(const char *name) {
  * @param statplant   Output pointer populated with the loaded PlantStats.
  * @return 0 if stats were loaded and printed successfully, 1 otherwise.
  */
-int plant_stats(const char *plant_name, PlantStats *statplant) {
-	if (plant_load(plant_name, statplant) == 0) {
+int plant_stats(const char *project_root, const char *plant_name, PlantStats *statplant) {
+	if (plant_load(project_root, plant_name, statplant) == 0) {
 		printf("Plant:                     %s\n", plant_name);
 		printf("Water Level:               %d\n",
 		       statplant->waterlevel);
@@ -674,23 +674,23 @@ int plant_stats(const char *plant_name, PlantStats *statplant) {
  *
  * @param name Name of the plant daemon to respawn.
  */
-void respawn_plant(const char *name) {
-	if (is_plant_running(name)) {
+void respawn_plant(const char *project_root, const char *name) {
+	if (is_plant_running(project_root, name)) {
 		fprintf(stderr, "plant daemon is still alive\n");
 		return;
 	}
 
-	if (!is_daemon_registered(name)) {
+	if (!is_daemon_registered(project_root, name)) {
 		fprintf(stderr, "plant daemon not registered\n");
 		return;
 	}
 
 	printf("respawning dplant daemon: %s\n", name);
 	spawn_plant();
-	daemon_register(name);
-	daemon_spawn_log(name);
-	daemon_log("respawned dplant");
-	daemon_work(name);
+	daemon_register(project_root, name);
+	daemon_spawn_log(project_root, name);
+	daemon_log(project_root, "respawned dplant");
+	daemon_work(project_root, name);
 
 	unlock_plant();
 }
@@ -715,64 +715,73 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	resolve_project_root();
+	char *project_root = resolve_project_root();
 	const char *plant_name = argv[1];
 
 	// wtf if i dkill and run dplant plant water it creates a new daemon lol
 	// if(argc == 3 && is_plant_running(plant_name)){
 	// stop spawning D:
-	if (argc == 3 && !is_plant_running(plant_name) &&
+	if (argc == 3 && !is_plant_running(project_root, plant_name) &&
 	    strcmp("respawn", argv[2]) != 0) {
 		fprintf(stderr, "No running daemon for '%s']n", plant_name);
 		fflush(stderr);
+		free(project_root);
 		return 1;
 	} else if (argc == 3 && strcmp("respawn", argv[2]) == 0) {
-		respawn_plant(plant_name);
+		respawn_plant(project_root, plant_name);
+		free(project_root);
 		return 0;
 	}
 
-	if (argc == 3 && is_plant_running(plant_name)) {
+	if (argc == 3 && is_plant_running(project_root, plant_name)) {
 		if (strcmp(argv[2], "water") == 0) {
-			plant_water(plant_name);
+			plant_water(project_root, plant_name);
+			free(project_root);
 			return 0;
 		} else if (strcmp(argv[2], "stats") == 0) {
 			PlantStats statplant;
-			if (plant_stats(plant_name, &statplant) != 0) {
+			if (plant_stats(project_root, plant_name, &statplant) != 0) {
 				fprintf(stderr,
 					"unable to load state for: %s\n",
 					plant_name);
 			}
+			free(project_root);
 			return 0;
 		} else {
 			fprintf(stderr,
 				"unknown command for running daemon: %s\n",
 				argv[2]);
+			free(project_root);
 			return 1;
 		}
 	}
 
-	if (is_plant_running(plant_name)) {
+	if (is_plant_running(project_root, plant_name)) {
 		fprintf(stderr, "dplant daemon <%s> is already active\n",
 			plant_name);
+		free(project_root);
 		return 1;
 	}
 
-	if (!plant_lock(plant_name)) {
+	if (!plant_lock(project_root, plant_name)) {
 		fprintf(stderr, "could not acquire lock for daemon: <%s>\n",
 			plant_name);
+		free(project_root);
 		return 1;
 	}
 
-	if (argc == 2 && !is_daemon_registered(plant_name)) {
+	if (argc == 2 && !is_daemon_registered(project_root, plant_name)) {
 		spawn_plant();
-		daemon_register(plant_name);
-		daemon_spawn_log(plant_name);
-		daemon_log("dplant daemon started");
-		daemon_work(plant_name);
+		daemon_register(project_root, plant_name);
+		daemon_spawn_log(project_root, plant_name);
+		daemon_log(project_root, "dplant daemon started");
+		daemon_work(project_root, plant_name);
 
 		unlock_plant();
+		free(project_root);
 		return 0;
 	}
 
+	free(project_root);
 	return 1;
 }

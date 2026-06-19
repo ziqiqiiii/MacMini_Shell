@@ -1,23 +1,22 @@
 #include "system_program.h"
 
-
 /**
  * @brief Appends a spawn event for the dspawn daemon to the log file.
  *
  * Writes a timestamped entry to tmp/dspawn.log recording the current PID.
  */
-void daemon_spawn_log(void) {
+
+void daemon_spawn_log(const char *project_root) {
         char log_path[PATH_MAX];
+
         strncpy(log_path, project_root, sizeof(log_path) - 1);
         strncat(log_path, "/tmp/dspawn.log",
                 sizeof(log_path) - strlen(log_path) - 1);
-
         int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
         if (fd == -1) {
                 perror("log open");
                 return;
         }
-
         time_t now = time(NULL);
         dprintf(fd, "%sStarted dspawn daemon [%d].\n", ctime(&now), getpid());
         close(fd);
@@ -32,7 +31,7 @@ void daemon_spawn_log(void) {
  *
  * @param name Base name to register for the current daemon process.
  */
-void daemon_register(const char *name) {
+void daemon_register(const char *project_root, const char *name) {
         char reg_path[PATH_MAX];
         strncpy(reg_path, project_root, sizeof(reg_path) - 1);
         strncat(reg_path, "/tmp/daemons.reg",
@@ -82,9 +81,9 @@ void daemon_register(const char *name) {
  *
  * Runs indefinitely, logging one work-cycle message every 10 seconds.
  */
-void daemon_work(void) {
+void daemon_work(const char *project_root) {
         while (1) {
-                daemon_log("one work cycle");
+                daemon_log(project_root, "one work cycle");
                 sleep(10);
         }
 }
@@ -103,12 +102,14 @@ int main(int argc, char **argv) {
         (void)argc;
         (void)argv;
 
-        resolve_project_root();
-        spawn_daemon();
-        daemon_register("dspawnowo");
-        daemon_spawn_log();
-        daemon_log("test");
-        daemon_work();
+        char *project_root = resolve_project_root();
 
+        spawn_daemon();
+        daemon_register(project_root, "dspawnowo");
+        daemon_spawn_log(project_root);
+        daemon_log(project_root, "test");
+        daemon_work(project_root);
+
+        free(project_root);
         return 0;
 }
