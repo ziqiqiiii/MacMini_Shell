@@ -1,5 +1,4 @@
 #include "system_program.h"
-#include <libgen.h>
 
 char project_root[PATH_MAX];
 
@@ -223,5 +222,6 @@ int main(int argc, char **argv) {
         daemon_spawn_log();
         daemon_log("test");
         daemon_work();
+
         return 0;
 }

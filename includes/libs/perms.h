@@ -2,6 +2,7 @@
 # define PERMS_H
 
 # include <sys/stat.h>
+# include <string.h>
 
 void	perms_to_string(mode_t mode, char str[11]);
 
