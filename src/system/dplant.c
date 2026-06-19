@@ -144,33 +144,6 @@ void daemon_spawn_log(const char *name) {
 }
 
 /**
- * @brief Appends an arbitrary message from the daemon to the log file.
- *
- * Writes a timestamped entry to tmp/dspawn.log containing the current PID
- * and the provided message string.
- *
- * @param msg Message string to record in the log.
- */
-void daemon_log(const char *msg) {
-	char log_path[PATH_MAX];
-	strncpy(log_path, project_root, sizeof(log_path) - 1);
-	strncat(log_path, "/tmp/dspawn.log",
-		sizeof(log_path) - strlen(log_path) - 1);
-
-	int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-	if (fd == -1) {
-		perror("log open");
-		return;
-	}
-
-	time_t now = time(NULL);
-	flock(fd, LOCK_EX);
-	dprintf(fd, "%sLogging dspawn daemon [%d] message: %s.\n", ctime(&now),
-		getpid(), msg);
-	close(fd);
-}
-
-/**
  * @brief Checks whether a daemon name exists in the active registry.
  *
  * Scans tmp/daemons.reg line by line for an exact name match.

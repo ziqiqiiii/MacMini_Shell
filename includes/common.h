@@ -9,6 +9,11 @@
 # include <string.h>
 # include <unistd.h>
 # include <libgen.h>
+# include <signal.h>
+# include <fcntl.h>
+# include <time.h>
+# include <sys/file.h>
+# include <sys/stat.h>
 
 /*
 ** Helpers shared across the standalone system programs (bin/).
@@ -30,5 +35,9 @@ void	perms_to_string(mode_t mode, char str[11]);
 /* Absolute path of the project root, resolved from /proc/self/exe. */
 extern char	project_root[PATH_MAX];
 void	resolve_project_root(void);
+
+/* Daemonization + logging for the long-running system programs. */
+void	spawn_daemon(void);
+void	daemon_log(const char *msg);
 
 #endif

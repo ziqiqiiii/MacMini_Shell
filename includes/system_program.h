@@ -34,7 +34,4 @@
 # define SHELL_OPT_DELIM "-"
 # define MAX_DAEMONS 64
 
-void spawn_daemon(void);
-void daemon_log(const char *tolog);
-
 #endif

@@ -2,58 +2,6 @@
 
 
 /**
- * @brief Daemonizes the current process using a double-fork.
- *
- * Performs the standard Unix daemonization sequence: first fork exits the
- * parent, setsid() creates a new session, a second fork prevents the daemon
- * from reacquiring a terminal. Closes all open file descriptors and redirects
- * stdin/stdout/stderr to /dev/null.
- */
-void spawn_daemon(void) {
-        printf("some kind of daemon spawning program\n");
-        printf(
-            "spawning a daemon, remember to run ./daemonslayer to kill them\n");
-        // first fork
-        pid_t pid = fork();
-        if (pid < 0)
-                exit(EXIT_FAILURE);
-        if (pid > 0)
-                exit(EXIT_SUCCESS);
-
-        if (setsid() < 0)
-                exit(EXIT_FAILURE);
-
-        // disable signals
-        signal(SIGCHLD, SIG_IGN);
-        signal(SIGHUP, SIG_IGN);
-
-        // second child fork
-        pid = fork();
-        if (pid < 0)
-                exit(EXIT_FAILURE);
-        if (pid > 0)
-                exit(EXIT_SUCCESS);
-
-        umask(0); // allow daemon perms
-        // chdir("/"); //change wd to / (always exists)
-        // staying in projects root to write to tmp
-
-        // close all fd
-        for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
-                close(fd);
-
-        // dump stdin to /dev/null
-        int null_fd = open("/dev/null", O_RDWR);
-        if (null_fd != -1) {
-                dup2(null_fd, STDIN_FILENO);
-                dup2(null_fd, STDOUT_FILENO);
-                dup2(null_fd, STDERR_FILENO);
-                if (null_fd > 2)
-                        close(null_fd);
-        }
-}
-
-/**
  * @brief Appends a spawn event for the dspawn daemon to the log file.
  *
  * Writes a timestamped entry to tmp/dspawn.log recording the current PID.
@@ -72,32 +20,6 @@ void daemon_spawn_log(void) {
 
         time_t now = time(NULL);
         dprintf(fd, "%sStarted dspawn daemon [%d].\n", ctime(&now), getpid());
-        close(fd);
-}
-
-/**
- * @brief Appends an arbitrary message from the daemon to the log file.
- *
- * Writes a timestamped entry to tmp/dspawn.log containing the current PID
- * and the provided message string.
- *
- * @param msg Message string to record in the log.
- */
-void daemon_log(const char *msg) {
-        char log_path[PATH_MAX];
-        strncpy(log_path, project_root, sizeof(log_path) - 1);
-        strncat(log_path, "/tmp/dspawn.log",
-                sizeof(log_path) - strlen(log_path) - 1);
-
-        int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd == -1) {
-                perror("log open");
-                return;
-        }
-
-        time_t now = time(NULL);
-        dprintf(fd, "%sLogging dspawn daemon [%d] message: %s.\n", ctime(&now),
-                getpid(), msg);
         close(fd);
 }
 
