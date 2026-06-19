@@ -1,40 +1,5 @@
 #include "system_program.h"
 
-char project_root[PATH_MAX];
-
-/**
- * @brief Resolves the absolute path of the project root directory.
- *
- * Reads the executable's path via /proc/self/exe and navigates one level up
- * if the binary resides in a "bin" subdirectory. Falls back to $HOME or "."
- * if the symlink cannot be read. Result is stored in the global project_root.
- */
-void resolve_project_root(void) {
-        printf("resolving project root \n");
-        char path[PATH_MAX];
-        // should return in the /bin dir, need to back one out
-        ssize_t n = readlink("/proc/self/exe", path, sizeof(path) - 1);
-        if (n == -1) {
-                // fallback if unable to get path
-                perror("readlink");
-                const char *home = getenv("HOME");
-                if (home)
-                        strncpy(project_root, home, sizeof(project_root));
-                else
-                        strcpy(project_root, ".");
-                return;
-        }
-
-        path[n] = '\0';
-        char *dir = dirname(path);
-        if (strcmp(basename(dir), "bin") == 0)
-                strncpy(project_root, dirname(dir), sizeof(project_root) - 1);
-        else
-                strncpy(project_root, dir, sizeof(project_root) - 1);
-
-        project_root[sizeof(project_root) - 1] = '\0';
-        printf("project root path: %s\n", project_root);
-}
 
 typedef struct {
         char name[64];

@@ -7,7 +7,7 @@
 									getcwd,isatty, open, pipe, read, unlink,
 									write, execve, ttyname, ttyslot, opendir,
 									readdir, closedir */
-#  include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
+# include <readline/readline.h>	/* readline, rl_clear_history, rl_on_new_line,
 									rl_replace_line, rl_redisplay,
 									add_history */
 # include <readline/history.h>

@@ -2,16 +2,14 @@
  * tests/unit/test_perms.c
  *
  * Unit tests for perms_to_string(), implemented in
- * src/system_programs/perms.c and declared in includes/libs/perms.h.
+ * src/common/perms.c and declared in includes/common.h.
  *
  * Run with:
  *   make unit
  */
 #include "unity.h"
 #include "minishell.h"
-#include "perms.h"
-#include <string.h>
-#include <sys/stat.h>
+#include "common.h"
 
 int	g_exit_status = 0;
 
