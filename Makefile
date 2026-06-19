@@ -105,9 +105,9 @@ $(COMMON_LIB): $(COMMON_OBJ)
 	@ echo "\n$(GREEN)[Success] $(BLUE)libcommon.a$(CLR_RMV) created ✔️"
 
 # --- shell binary -----------------------------------------------------------
-$(NAME): $(LIBFT) $(SHELL_OBJ)
+$(NAME): $(LIBFT) $(COMMON_LIB) $(SHELL_OBJ)
 	@ echo "\n$(GREEN)Compilation $(CLR_RMV)of $(BLUE)$(NAME)$(CLR_RMV)..."
-	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
+	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(COMMON_LIB) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
 	@ echo "$(GREEN)[Success] $(BLUE)$(NAME)$(CLR_RMV) created ✔️"
 
 ################################################################################

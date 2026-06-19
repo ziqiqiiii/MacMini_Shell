@@ -27,6 +27,7 @@
 
 # include "libft.h"
 # include "get_next_line.h"
+# include "common.h"
 
 # define GREEN	"\033[1;32m"
 # define BLUE	"\033[1;34m"
@@ -286,6 +287,5 @@ int					ft_tcsetattr(int fd, int optional_actions, \
 							struct termios *termios_p);
 
 void				print_exec_cmd(char **cmd);
-char				*get_current_directory(void);
 
 #endif

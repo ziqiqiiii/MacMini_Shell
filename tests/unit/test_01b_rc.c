@@ -53,7 +53,7 @@ static void	test_get_rc_paths_sets_exe_dir_path(void)
 
 	memset(&sh, 0, sizeof(sh));
 	get_rc_paths(&sh, rc_path, home_path);
-	exe_dir = get_current_directory();
+	exe_dir = resolve_project_root();
 	snprintf(expected, sizeof(expected), "%s/.macminishellrc", exe_dir);
 	TEST_ASSERT_EQUAL_STRING(expected, rc_path);
 	free(exe_dir);
@@ -257,9 +257,9 @@ static void	test_source_rc_creates_rc_when_missing(void)
 	char	*exe_dir;
 	char	rc_check[PATH_MAX];
 
-	exe_dir = get_current_directory();
+	exe_dir = resolve_project_root();
 	if (!exe_dir)
-		TEST_IGNORE_MESSAGE("get_current_directory returned NULL");
+		TEST_IGNORE_MESSAGE("resolve_project_root returned NULL");
 	snprintf(rc_check, sizeof(rc_check), "%s/.macminishellrc", exe_dir);
 	unlink(rc_check);
 	memset(&sh, 0, sizeof(sh));

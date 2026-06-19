@@ -15,6 +15,8 @@
 # include <sys/file.h>
 # include <sys/stat.h>
 
+# include "libft.h"
+
 /*
 ** Helpers shared across the standalone system programs (bin/).
 ** Linked into each program through libcommon.a.
@@ -34,7 +36,7 @@ void	perms_to_string(mode_t mode, char str[11]);
 
 /* Absolute path of the project root, resolved from /proc/self/exe. */
 extern char	project_root[PATH_MAX];
-void	resolve_project_root(void);
+char	*resolve_project_root(void);
 
 /* Daemonization + logging for the long-running system programs. */
 void	spawn_daemon(void);

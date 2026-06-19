@@ -19,23 +19,3 @@ void	print_exec_cmd(char **cmd)
 		i++;
 	}
 }
-
-char		*get_current_directory(void)
-{
-	char		temp1[PATH_MAX];
-	char		*temp2;
-	char		*path;
-	ssize_t		n;
-
-	n = readlink("/proc/self/exe", temp1, sizeof(temp1) - 1);
-	if (n == -1)
-		return (NULL);
-	temp1[n] = '\0';
-	temp2 = dirname(temp1);
-	n = strlen(temp2) + 1;
-	path = malloc(sizeof(char) * n);
-	if (!path)
-		return (NULL);
-	ft_strlcpy(path, temp2, n);
-	return (path);
-}

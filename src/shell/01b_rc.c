@@ -29,7 +29,7 @@ void	get_rc_paths(t_root *sh, char *rc_path, char *home_path)
 
 	rc_path[0] = '\0';
 	home_path[0] = '\0';
-	sh->current_dir = get_current_directory();
+	sh->current_dir = resolve_project_root();
 	snprintf(rc_path, PATH_MAX, "%s/.macminishellrc", sh->current_dir);
 	home = getenv("HOME");
 	if (home)
