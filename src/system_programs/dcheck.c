@@ -1,5 +1,4 @@
 #include "system_program.h"
-#include <libgen.h>
 
 char project_root[PATH_MAX];
 

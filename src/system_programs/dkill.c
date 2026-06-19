@@ -1,9 +1,4 @@
 #include "system_program.h"
-#include <ctype.h>
-#include <libgen.h>
-
-// change max number of daemons here
-#define MAX_DAEMONS 64
 
 char project_root[PATH_MAX];
 

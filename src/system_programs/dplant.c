@@ -1,8 +1,4 @@
 #include "system_program.h"
-#include <libgen.h>
-#include <pthread.h>
-#include <sys/file.h>
-#define MAX_DAEMONS 64
 
 char project_root[PATH_MAX];
 int plant_lock_fd = -1;

@@ -129,7 +129,6 @@ static void test_invalid_n_flag_treated_as_word(void)
 
 static void test_returns_exit_success(void)
 {
-	char	buf[64];
 	char	*cmd[] = {"echo", "test", NULL};
 
 	/* discard output; only check the return value */

@@ -123,7 +123,6 @@ $(NAME): $(LIBFT) $(OBJ)
 $(LIBFT):
 	@ echo "$(GREEN)Making $(CYAN)Libft $(CLR_RMV) library..."
 	@ $(MAKE) -C $(LIBFT_DIR)
-	@ echo "$(GREEN)Generating $(BLUE)minishell $(CLR_RMV)object files..."
 
 
 ################################################################################
@@ -165,24 +164,25 @@ UNIT_BIN_DIR	:= $(UNIT_DIR)/bin
 
 UNIT_SOURCES	:= $(wildcard $(UNIT_DIR)/test_*.c)
 UNIT_BINS		:= $(UNIT_SOURCES:$(UNIT_DIR)/%.c=$(UNIT_BIN_DIR)/%)
-SHELL_SRCS		:= $(filter-out $(SRC_DIR)/00_main.c, $(wildcard $(SRC_DIR)/*.c))
+SHELL_OBJ		:= $(filter-out $(OBJ_DIR)/00_main.o, $(OBJ))
 
-TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -I./$(LIBFT_DIR)$(INC_DIR) -Wall -Wextra -DUNIT_TEST
+TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -I./$(LIBFT_DIR)$(INC_DIR) -Wall -Wextra -DUNIT_TEST $(FSAN)
 
-$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c $(SHELL_SRCS) | $(LIBFT)
+$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c $(SHELL_OBJ) | $(LIBFT)
 	@mkdir -p $(UNIT_BIN_DIR)
-	@$(CC) $(TEST_CFLAGS) $^ \
+	@ printf "$(YELLOW)$<$(CLR_RMV)... "
+	@$(CC) $(TEST_CFLAGS) $< $(UNITY_DIR)/unity.c $(SHELL_OBJ) \
 		$(shell find $(SRC_DIR)/system_programs -name "*$*.c" 2>/dev/null) \
 		$(LIB) $(READLINE) \
 		-o $@
 
 TEST_RUNNER := ./scripts/run_tests.sh
 
-unit: $(UNIT_BINS)
+unit: $(NAME) $(UNIT_BINS)
 	@echo "$(CYAN)==> Running unit tests$(CLR_RMV)"
 	@$(TEST_RUNNER) unit $(UNIT_BINS)
 
-integration: $(NAME) $(SYS_BINS)
+integration: all
 	@echo "$(CYAN)==> Running integration tests$(CLR_RMV)"
 	@$(TEST_RUNNER) integration $(INTEGRATION_DIR)/*.sh
 

@@ -145,6 +145,7 @@ static void	test_run_rc_handles_path_line(void)
 	path_after = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(path_after);
 	TEST_ASSERT_EQUAL_INT(0, strncmp(path_after, "/custom/bin", 11));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 static void	test_run_rc_strips_trailing_newline(void)
@@ -164,6 +165,7 @@ static void	test_run_rc_strips_trailing_newline(void)
 	path_after = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(path_after);
 	TEST_ASSERT_EQUAL_INT(0, strncmp(path_after, "/test:", 6));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 static void	test_run_rc_strips_crlf(void)
@@ -183,6 +185,7 @@ static void	test_run_rc_strips_crlf(void)
 	path_after = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(path_after);
 	TEST_ASSERT_EQUAL_INT(0, strncmp(path_after, "/win:", 5));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 static void	test_run_rc_multiple_lines(void)
@@ -202,6 +205,7 @@ static void	test_run_rc_multiple_lines(void)
 	path_after = getenv("PATH");
 	TEST_ASSERT_NOT_NULL(path_after);
 	TEST_ASSERT_EQUAL_INT(0, strncmp(path_after, "/a:", 3));
+	ft_lstclear(&sh.env_list, del_data);
 }
 
 /* ======== create_empty_rc tests ======== */

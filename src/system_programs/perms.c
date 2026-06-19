@@ -1,5 +1,4 @@
 #include "perms.h"
-#include <string.h>
 
 void	perms_to_string(mode_t mode, char str[11])
 {

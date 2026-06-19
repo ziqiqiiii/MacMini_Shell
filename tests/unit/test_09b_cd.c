@@ -156,6 +156,7 @@ static void	test_cd_tilde_expands_to_home(void)
 	TEST_ASSERT_EQUAL_INT(EXIT_SUCCESS, cd(cmd, &g_env));
 	getcwd(cwd, sizeof(cwd));
 	TEST_ASSERT_EQUAL_STRING(home, cwd);
+	free(cmd[1]);
 }
 
 int	main(void)

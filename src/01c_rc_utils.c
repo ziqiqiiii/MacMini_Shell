@@ -1,8 +1,5 @@
 #include "minishell.h"
 
-
-
-
 t_rc_line_type	classify_rc_line(const char *line, const char **value_out)
 {
 	const char	*s;

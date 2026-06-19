@@ -113,6 +113,7 @@ static int	add_link_list(char	*input, t_list	**env_list)
 	key = key_check(input);
 	if (key == NULL)
 		return (EXIT_FAILURE);
+	i = 1;
 	tmp = *env_list;
 	while (tmp)
 	{
