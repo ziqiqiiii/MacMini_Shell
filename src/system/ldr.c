@@ -10,35 +10,6 @@
  * @param mode File mode bitmask from stat(2).
  * @param str  Output buffer of at least 11 bytes; must be caller-allocated.
  */
-void perms_to_string(mode_t mode, char str[11]) {
-        strcpy(str, "----------");
-        if (S_ISDIR(mode))
-                str[0] = 'd';
-        if (S_ISCHR(mode))
-                str[0] = 'c';
-        if (S_ISBLK(mode))
-                str[0] = 'b';
-
-        if (mode & S_IRUSR)
-                str[1] = 'r';
-        if (mode & S_IWUSR)
-                str[2] = 'w';
-        if (mode & S_IXUSR)
-                str[3] = 'x';
-        if (mode & S_IRGRP)
-                str[4] = 'r';
-        if (mode & S_IWGRP)
-                str[5] = 'w';
-        if (mode & S_IXGRP)
-                str[6] = 'x';
-        if (mode & S_IROTH)
-                str[7] = 'r';
-        if (mode & S_IWOTH)
-                str[8] = 'w';
-        if (mode & S_IXOTH)
-                str[9] = 'x';
-}
-
 /**
  * @brief Prints a file path with directory separators highlighted in yellow.
  *
@@ -51,7 +22,7 @@ void print_path_with_colored_slash(const char *path) {
         const char *p = path;
         while (*p) {
                 if (*p == '/') {
-                        printf(COLOR_YELLOW "/%s" COLOR_RESET, COLOR_GREEN);
+                        printf(CL_YELLOW "/%s" CL_RESET, CL_GREEN);
                 } else {
                         putchar(*p);
                 }
@@ -88,7 +59,7 @@ void list_directory(const char *basePath) {
                                 if (stat(path, &st) == 0) {
                                         perms_to_string(st.st_mode,
                                                         permissions);
-                                        printf(COLOR_RED "%s " COLOR_RESET,
+                                        printf(CL_RED "%s " CL_RESET,
                                                permissions);
                                         print_path_with_colored_slash(path);
                                         printf("\n");

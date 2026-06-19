@@ -2,161 +2,136 @@
 #  |\/ |   _  |  |  /   _
 #  |   |  (   |    <    __/
 # _|  _| \__,_| _|\_\ \___|
-#                              
+#
 ################################################################################
-#                                     CONFIG                                   #
+#                                    CONFIG                                    #
 ################################################################################
 
 NAME		:= macmini_shell
 CC			:= gcc
 FLAGS		:= -Wall -Wextra -Werror
+RM			:= rm -rf
 
 CLR_RMV		:= \033[0m
-RED		    := \033[1;31m
+RED			:= \033[1;31m
 GREEN		:= \033[1;32m
 YELLOW		:= \033[1;33m
 BLUE		:= \033[1;34m
-CYAN 		:= \033[1;36m
-RM			:= rm -rf
+CYAN		:= \033[1;36m
 
 ################################################################################
-#                               PROGRAM'S INCLUDES                             #
+#                              PLATFORM SPECIFICS                              #
 ################################################################################
 
-LIBFT_DIR = libft/
-LIBFT = libft.a
-LIB := -lft -L./$(LIBFT_DIR)
+UNAME		:= $(shell uname)
 
-UNAME 		= $(shell uname)
-
-# Readline flags for Linux
+# Readline + AddressSanitizer for Linux
 ifeq ($(UNAME), Linux)
-READLINE = -lreadline
-INC_RL   = -I/usr/include/readline
-FSAN	 = -fsanitize=address -g3
+	READLINE	:= -lreadline
+	INC_RL		:= -I/usr/include/readline
+	FSAN		:= -fsanitize=address -g3
 endif
 
-# Readline flags for MacOS
+# Readline for macOS
 ifeq ($(UNAME), Darwin)
-RL_PREFIX	= $(shell brew --prefix readline)
-READLINE 	= -lreadline -L$(RL_PREFIX)/lib
-INC_RL		= -I$(RL_PREFIX)/include
+	RL_PREFIX	:= $(shell brew --prefix readline)
+	READLINE	:= -lreadline -L$(RL_PREFIX)/lib
+	INC_RL		:= -I$(RL_PREFIX)/include
 endif
 
-
-INC_DIR		= includes
-INC			= -I./$(INC_DIR)
-INC_LIBFT	= -I./$(LIBFT_DIR)$(INC_DIR)
-
 ################################################################################
-#                                 PROGRAM'S SRCS                               #
+#                                DIRECTORIES                                   #
 ################################################################################
 
-SRC_DIR		:= ./src
-SRC			:= $(addsuffix .c, \
-					00_main \
-					01a_init\
-					01b_rc\
-					01c_rc_utils\
-					01d_banner\
-					02_prompt\
-					03_expand\
-					03a_expand_utils\
-					04_lexer\
-					04a_lexer_token_count\
-					04b_lexer_char_count\
-					04c_lexer_cmd_mod\
-					05_parser\
-					05a_parser_utils\
-					06_execute\
-					06a_exec_utils\
-					06b_exec_path\
-					07_pipe\
-					08_redirection\
-					08a_redir_utils\
-					08b_redir_heredoc\
-					09_builtin\
-					09a_echo\
-					09b_cd\
-					09c_pwd\
-					09d_export\
-					09e_unset\
-					09f_env\
-					09g_history\
-					09h_exit\
-					09i_usage\
-					09j_help\
-					09k_setenv\
-					09l_unsetenv\
-					10_quote\
-					10a_quote_utils\
-					11_signal\
-					11a_sigwait\
-					12_free\
-					13a_minishell_utils\
-					13b_minishell_utils2\
-					13c_minishell_utils3\
-				)
+SRC_DIR		:= src
+OBJ_DIR		:= obj
+BIN_DIR		:= bin
+INC_DIR		:= includes
 
-OBJ_DIR		:= ./obj
-OBJ			:= $(SRC:%.c=$(OBJ_DIR)/%.o)
+LIBFT_DIR	:= libft
+LIBFT		:= $(LIBFT_DIR)/libft.a
+LIB			:= -lft -L./$(LIBFT_DIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(OBJ_DIR)
-	@ $(CC) $(FLAGS) $(FSAN) $(INC) $(INC_LIBFT) $(INC_RL) -c $< -o $@
-	@ printf "$(YELLOW)$<$(CLR_RMV)... "
+COMMON_LIB	:= $(OBJ_DIR)/libcommon.a
+
+# Header search path shared by every target
+INC			:= -I./$(INC_DIR) -I./$(LIBFT_DIR)/$(INC_DIR) $(INC_RL)
 
 ################################################################################
-#                                  Makefile  objs                              #
+#                                  SOURCES                                     #
 ################################################################################
 
-all: system-programs $(NAME)
+# Shell  : every .c under src/shell        -> macmini_shell
+SHELL_SRC	:= $(wildcard $(SRC_DIR)/shell/*.c)
+SHELL_OBJ	:= $(SHELL_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# Common : helpers shared by system programs -> libcommon.a
+COMMON_SRC	:= $(wildcard $(SRC_DIR)/common/*.c)
+COMMON_OBJ	:= $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# System : every .c under src/system        -> one binary each in bin/
+SYS_SRC		:= $(wildcard $(SRC_DIR)/system/*.c)
+SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
+
+################################################################################
+#                                   BUILD                                      #
+################################################################################
+
+all: $(NAME) system-programs
 
 run: all
 	@ ./$(NAME)
 
-$(NAME): $(LIBFT) $(OBJ)
-	@ echo "\n$(GREEN)Compilation $(CLR_RMV)of $(BLUE) $(NAME) $(CLR_RMV)..."
-	@ $(CC) $(FLAGS) $(FSAN) $(OBJ) $(LIBFT_DIR)$(LIBFT) $(LIB) $(READLINE) -o $(NAME)
-	@ echo "$(GREEN)[Success] $(BLUE)$(NAME) $(CLR_RMV)created ✔️"
+# --- shell object rule (ASan-instrumented, mirrors src/ tree under obj/) -----
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@ mkdir -p $(dir $@)
+	@ $(CC) $(FLAGS) $(FSAN) $(INC) -c $< -o $@
+	@ printf "$(YELLOW)$<$(CLR_RMV)... "
 
+# --- common object rule (no ASan: linked into the plain system binaries) -----
+$(OBJ_DIR)/common/%.o: $(SRC_DIR)/common/%.c
+	@ mkdir -p $(dir $@)
+	@ $(CC) $(FLAGS) $(INC) -c $< -o $@
+	@ printf "$(YELLOW)$<$(CLR_RMV)... "
+
+# --- libft ------------------------------------------------------------------
 $(LIBFT):
-	@ echo "$(GREEN)Making $(CYAN)Libft $(CLR_RMV) library..."
+	@ echo "$(GREEN)Making $(CYAN)libft$(CLR_RMV) library..."
 	@ $(MAKE) -C $(LIBFT_DIR)
 
+# --- libcommon (helpers shared by the system programs) ----------------------
+$(COMMON_LIB): $(COMMON_OBJ)
+	@ ar rcs $@ $(COMMON_OBJ)
+	@ echo "\n$(GREEN)[Success] $(BLUE)libcommon.a$(CLR_RMV) created ✔️"
+
+# --- shell binary -----------------------------------------------------------
+$(NAME): $(LIBFT) $(SHELL_OBJ)
+	@ echo "\n$(GREEN)Compilation $(CLR_RMV)of $(BLUE)$(NAME)$(CLR_RMV)..."
+	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
+	@ echo "$(GREEN)[Success] $(BLUE)$(NAME)$(CLR_RMV) created ✔️"
 
 ################################################################################
 #                              SYSTEM PROGRAMS                                 #
 ################################################################################
 
-SYS_NAME	:= system_programs
-SYS_SRC_DIR	:= ./src/$(SYS_NAME)
-BIN_DIR		:= ./bin
-PERMS_SRC	:= $(SYS_SRC_DIR)/perms.c
-
-SYS_SOURCES	:= $(filter-out $(PERMS_SRC), $(wildcard $(SYS_SRC_DIR)/*.c))
-SYS_BINS	:= $(patsubst $(SYS_SRC_DIR)/%.c,$(BIN_DIR)/%,$(SYS_SOURCES))
-
-sys-header:
-	@ echo "$(GREEN)Generating $(CYAN)$(SYS_NAME) $(CLR_RMV)binaries..."
-
-$(BIN_DIR)/%: $(SYS_SRC_DIR)/%.c
+# Each system program is a standalone binary, linked against libcommon + libft.
+$(BIN_DIR)/%: $(SRC_DIR)/system/%.c $(COMMON_LIB) $(LIBFT)
 	@ mkdir -p $(BIN_DIR)
-	@ $(CC) $(FLAGS) $(INC) -o $@ $<
+	@ $(CC) $(FLAGS) $(INC) $< $(COMMON_LIB) $(LIBFT) -o $@
 	@ printf "$(YELLOW)$<$(CLR_RMV)... "
 
-$(BIN_DIR)/logo.txt: $(SYS_SRC_DIR)/logo.txt
+$(BIN_DIR)/logo.txt: $(SRC_DIR)/system/logo.txt
 	@ mkdir -p $(BIN_DIR)
 	@ cp $< $@
 
-system-programs: sys-header $(SYS_BINS) $(BIN_DIR)/logo.txt
-	@ echo "\n$(GREEN)[Success] $(BLUE)$(SYS_NAME) $(CLR_RMV)created ✔️"
+system-programs: $(SYS_BINS) $(BIN_DIR)/logo.txt
+	@ echo "\n$(GREEN)[Success] $(BLUE)system programs$(CLR_RMV) created ✔️"
 
 ################################################################################
 #                                    TESTS                                     #
 ################################################################################
 
-TESTS_DIR		:= ./tests
+TESTS_DIR		:= tests
 UNIT_DIR		:= $(TESTS_DIR)/unit
 INTEGRATION_DIR	:= $(TESTS_DIR)/integration
 UNITY_DIR		:= $(TESTS_DIR)/unity
@@ -164,67 +139,56 @@ UNIT_BIN_DIR	:= $(UNIT_DIR)/bin
 
 UNIT_SOURCES	:= $(wildcard $(UNIT_DIR)/test_*.c)
 UNIT_BINS		:= $(UNIT_SOURCES:$(UNIT_DIR)/%.c=$(UNIT_BIN_DIR)/%)
-SHELL_OBJ		:= $(filter-out $(OBJ_DIR)/00_main.o, $(OBJ))
 
-TEST_CFLAGS		:= -I./$(INC_DIR) -I./$(INC_DIR)/libs -I$(UNITY_DIR) -I./$(LIBFT_DIR)$(INC_DIR) -Wall -Wextra -DUNIT_TEST $(FSAN)
+# Shell objects minus main(), so each test can provide its own entry point.
+TEST_SHELL_OBJ	:= $(filter-out $(OBJ_DIR)/shell/00_main.o, $(SHELL_OBJ))
+TEST_CFLAGS		:= $(INC) -I$(UNITY_DIR) -Wall -Wextra -DUNIT_TEST $(FSAN)
 
-$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c $(SHELL_OBJ) | $(LIBFT)
-	@mkdir -p $(UNIT_BIN_DIR)
+$(UNIT_BIN_DIR)/test_%: $(UNIT_DIR)/test_%.c $(UNITY_DIR)/unity.c \
+                        $(TEST_SHELL_OBJ) $(COMMON_LIB) | $(LIBFT)
+	@ mkdir -p $(UNIT_BIN_DIR)
 	@ printf "$(YELLOW)$<$(CLR_RMV)... "
-	@$(CC) $(TEST_CFLAGS) $< $(UNITY_DIR)/unity.c $(SHELL_OBJ) \
-		$(shell find $(SRC_DIR)/system_programs -name "*$*.c" 2>/dev/null) \
-		$(LIB) $(READLINE) \
+	@ $(CC) $(TEST_CFLAGS) $< $(UNITY_DIR)/unity.c $(TEST_SHELL_OBJ) \
+		$(shell find $(SRC_DIR)/system -name "*$*.c" 2>/dev/null) \
+		$(COMMON_LIB) $(LIB) $(READLINE) \
 		-o $@
 
 TEST_RUNNER := ./scripts/run_tests.sh
 
 unit: $(NAME) $(UNIT_BINS)
-	@echo "$(CYAN)==> Running unit tests$(CLR_RMV)"
-	@$(TEST_RUNNER) unit $(UNIT_BINS)
+	@ echo "$(CYAN)==> Running unit tests$(CLR_RMV)"
+	@ $(TEST_RUNNER) unit $(UNIT_BINS)
 
 integration: all
-	@echo "$(CYAN)==> Running integration tests$(CLR_RMV)"
-	@$(TEST_RUNNER) integration $(INTEGRATION_DIR)/*.sh
+	@ echo "$(CYAN)==> Running integration tests$(CLR_RMV)"
+	@ $(TEST_RUNNER) integration $(INTEGRATION_DIR)/*.sh
 
 test: unit integration
 
-ai-unit-tests:
-	@if [ -z "$(MODULE)" ]; then \
-	  echo "Usage: make ai-unit-tests MODULE=name"; \
-	  echo "  Generates tests/unit/test_name.c"; \
-	  exit 1; \
-	fi
-	@MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
-	  bash ./scripts/gen_unit_tests.sh $(MODULE) \
-	  > $(UNIT_DIR)/test_$(MODULE).c
-	@echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"
+################################################################################
+#                                  AI TESTS                                    #
+################################################################################
 
-ai-builtin-tests:
-	@if [ -z "$(MODULE)" ]; then \
-	  echo "Usage: make ai-builtin-tests MODULE=name"; \
-	  echo "  Example: make ai-builtin-tests MODULE=09a_echo"; \
-	  exit 1; \
-	fi
-	@MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
-	  bash ./scripts/gen_builtin_tests.sh $(MODULE) \
-	  > $(UNIT_DIR)/test_$(MODULE).c
-	@echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"
+ai-unit-tests ai-builtin-tests:
+	@ if [ -z "$(MODULE)" ]; then \
+		echo "Usage: make $@ MODULE=name"; exit 1; fi
+	@ MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
+		bash ./scripts/gen_$(if $(filter ai-builtin-tests,$@),builtin,unit)_tests.sh \
+		$(MODULE) > $(UNIT_DIR)/test_$(MODULE).c
+	@ echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"
 
 ################################################################################
 #                                   CLEANUP                                    #
 ################################################################################
 
 clean:
-	@ $(RM) *.o */*.o */*/*.o
-	@ $(RM) -r $(OBJ_DIR)
-	@ $(RM) -r $(UNIT_BIN_DIR)
-	@ echo "$(RED)Deleting $(BLUE)$(NAME) $(CLR_RMV)objs ✔️"
+	@ $(RM) $(OBJ_DIR) $(UNIT_BIN_DIR)
+	@ echo "$(RED)Deleting $(BLUE)$(NAME)$(CLR_RMV) objs ✔️"
 
 fclean: clean
-	@ $(RM) $(NAME)
-	@ $(RM) $(SYS_BINS)
+	@ $(RM) $(NAME) $(SYS_BINS) $(BIN_DIR)
 	@ $(MAKE) fclean -C $(LIBFT_DIR)
-	@ echo "$(RED)Deleting $(BLUE)$(NAME) $(CLR_RMV)binary ✔️"
+	@ echo "$(RED)Deleting $(BLUE)$(NAME)$(CLR_RMV) binary ✔️"
 
 re: fclean all
 
@@ -232,8 +196,7 @@ re: fclean all
 #                              PHONY && PRECIOUS                               #
 ################################################################################
 
-.PHONY:		all clean fclean re run \
-			system-programs sys-header unit integration test \
-			ai-unit-tests ai-builtin-tests
+.PHONY:		all run system-programs unit integration test \
+			ai-unit-tests ai-builtin-tests clean fclean re
 
-.PRECIOUS:	$(NAME) $(OBJ)
+.PRECIOUS:	$(OBJ_DIR)/%.o
