@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
         const char *backup_path = getenv("BACKUP_DIR");
         if (!backup_path) {
-                fprintf(stderr, "BACKUP_DIR not set");
+                fprintf(stderr, "BACKUP_DIR not set\n");
                 free(project_root);
                 return 1;
         }
