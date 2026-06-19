@@ -12,6 +12,7 @@ A POSIX-like shell implemented in C. Supports interactive prompts, command histo
 - [Run](#run)
 - [Built-in Commands](#built-in-commands)
 - [Shell Operators](#shell-operators)
+- [System Programs](#system-programs)
 - [Exit Codes](#exit-codes)
 - [Architecture](#architecture)
 - [Project Structure](#project-structure)
@@ -28,7 +29,7 @@ A POSIX-like shell implemented in C. Supports interactive prompts, command histo
 - Pipes (`|`) with full pipeline support
 - Signal handling: `Ctrl-C`, `Ctrl-D`, `Ctrl-\`
 - Built-in commands: `echo`, `cd`, `pwd`, `export`, `unset`, `env`, `history`, `exit`, `help`, `usage`
-- Local binaries in `./bin/` are resolved before system `$PATH`
+- Bundled system programs in `./bin/` (`backup`, `dcheck`, `dkill`, `dplant`, `dspawn`, `find`, `ld`, `ldr`, `sys`), resolved before the system `$PATH`
 
 ---
 
@@ -66,29 +67,29 @@ sudo apt install libreadline-dev
 Clone the repository and build with `make`:
 
 ```bash
-git clone https://github.com/ziqiqiiii/minishell.git
-cd minishell
+git clone https://github.com/ziqiqiiii/MacMini_Shell.git
+cd MacMini_Shell
 make
 ```
 
-This compiles `libft`, all system programs under `./bin/`, and the `minishell` binary.
+This compiles `libft`, all system programs under `./bin/`, and the `macmini_shell` binary.
 
 Other Makefile targets:
 
-| Command      | Description                            |
-|--------------|----------------------------------------|
-| `make`       | Build everything (`make all`)          |
-| `make run`   | Build and launch minishell immediately |
-| `make clean` | Remove object files                    |
-| `make fclean`| Remove object files and binary         |
-| `make re`    | Full rebuild (`fclean` + `all`)        |
+| Command      | Description                                 |
+|--------------|---------------------------------------------|
+| `make`       | Build everything (`make all`)               |
+| `make run`   | Build and launch `macmini_shell` immediately|
+| `make clean` | Remove object files                         |
+| `make fclean`| Remove object files and binary              |
+| `make re`    | Full rebuild (`fclean` + `all`)             |
 
 ---
 
 ## Run
 
 ```bash
-./minishell
+./macmini_shell
 ```
 
 Or build and run in one step:
@@ -125,6 +126,24 @@ make run
 | `>`      | Redirect stdout to file (overwrite)  |
 | `>>`     | Redirect stdout to file (append)     |
 | `<<`     | Heredoc — read stdin until delimiter |
+
+---
+
+## System Programs
+
+Standalone C programs compiled into `./bin/` and resolved ahead of the system `$PATH` (the shell prepends `$PWD/bin`). They can also be run directly.
+
+| Program   | Description                                                       |
+|-----------|------------------------------------------------------------------|
+| `find`    | Recursively list files whose name contains a keyword             |
+| `ld`      | List the current directory's contents with `ls -l`-style permissions |
+| `ldr`     | Recursively list all non-hidden files with permissions           |
+| `sys`     | Print system information alongside an ASCII logo                  |
+| `backup`  | Archive the path in `$BACKUP_DIR` into a timestamped tarball      |
+| `dspawn`  | Daemonize a process (double-fork) and log spawn events           |
+| `dplant`  | Spawn a named "plant" daemon guarded by an exclusive lock         |
+| `dcheck`  | Display the status of all registered daemons                     |
+| `dkill`   | Interactively kill one or all registered daemons                 |
 
 ---
 
@@ -174,11 +193,14 @@ One global variable `g_exit_status` tracks the most recent foreground pipeline e
 ## Project Structure
 
 ```
-minishell/
-├── src/           Source files (numbered by pipeline stage)
-├── includes/      Header files (minishell.h)
+MacMini_Shell/
+├── src/
+│   ├── shell/         Shell pipeline sources (numbered by stage) → macmini_shell
+│   ├── system/        Standalone system programs → bin/
+│   └── common/        Helpers shared by system programs → libcommon.a
+├── includes/      Header files (minishell.h, system_program.h, common.h)
 ├── libft/         Custom C standard library
-├── bin/           Local binaries resolved ahead of $PATH
+├── bin/           System program binaries, resolved ahead of $PATH
 ├── tests/
 │   ├── unit/          Unity-based unit tests
 │   ├── integration/   Shell script integration tests
