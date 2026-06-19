@@ -275,13 +275,6 @@ void				free_tree(t_tree *node);
 
 /* 13_MINISHELL_UTILS */
 
-int					ft_pipe(int p[2]);
-int					ft_dup2(int new_fd, int old_fd);
-int					ft_open(const char *file, int flags, int permission);
-int					ft_close(int fd);
-
-int					ft_fork(void);
-void 				ft_kill(int pid);
 int					ft_tcgetattr(int fd, struct termios *termios_p);
 int					ft_tcsetattr(int fd, int optional_actions, \
 							struct termios *termios_p);

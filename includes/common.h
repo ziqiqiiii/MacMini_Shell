@@ -41,4 +41,16 @@ char	*resolve_project_root(void);
 void	spawn_daemon(void);
 void	daemon_log(const char *project_root, const char *msg);
 
+/* Filesystem helpers: create a dir/file only if it is missing. */
+int	create_dir_if_missing(const char *path, mode_t mode);
+int	create_file_if_missing(const char *path, mode_t mode);
+
+/* Syscall wrappers that exit on failure (shared by shell + system programs). */
+int	ft_pipe(int p[2]);
+int	ft_dup2(int new_fd, int old_fd);
+int	ft_open(const char *file, int flags, int permission);
+int	ft_close(int fd);
+int	ft_fork(void);
+void	ft_kill(int pid);
+
 #endif
