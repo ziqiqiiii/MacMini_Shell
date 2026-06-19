@@ -1,6 +1,5 @@
 #include "common.h"
 
-
 char	project_root[PATH_MAX];
 
 /**
