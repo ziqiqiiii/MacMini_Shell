@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
 
         char *project_root = resolve_project_root();
 
+        ensure_daemon_files(project_root);
         dcheck(project_root);
         dcheck_graveyard(project_root);
 

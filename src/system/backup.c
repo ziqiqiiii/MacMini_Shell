@@ -51,6 +51,12 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
+        if (ensure_archive_dir(project_root) == -1) {
+                fprintf(stderr, "Failed to create archive directory\n");
+                free(project_root);
+                return 1;
+        }
+
         time_t now = time(NULL);
         struct tm *tm_info = localtime(&now);
         char timebuff[64];

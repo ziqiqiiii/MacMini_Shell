@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
 
         char *project_root = resolve_project_root();
 
+        ensure_daemon_files(project_root);
         spawn_daemon();
         daemon_register(project_root, "dspawnowo");
         daemon_spawn_log(project_root);

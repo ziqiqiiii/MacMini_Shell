@@ -718,6 +718,8 @@ int main(int argc, char **argv) {
 	char *project_root = resolve_project_root();
 	const char *plant_name = argv[1];
 
+	ensure_daemon_files(project_root);
+
 	// wtf if i dkill and run dplant plant water it creates a new daemon lol
 	// if(argc == 3 && is_plant_running(plant_name)){
 	// stop spawning D:

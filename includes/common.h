@@ -42,15 +42,27 @@ void	spawn_daemon(void);
 void	daemon_log(const char *project_root, const char *msg);
 
 /* Filesystem helpers: create a dir/file only if it is missing. */
-int	create_dir_if_missing(const char *path, mode_t mode);
-int	create_file_if_missing(const char *path, mode_t mode);
+int		create_dir_if_missing(const char *path, mode_t mode);
+int		create_file_if_missing(const char *path, mode_t mode);
+
+/* Ensures <project_root>/tmp and the daemon registry/log files exist. */
+void	ensure_daemon_files(const char *project_root);
+
+/* Ensures <project_root>/archive exists (for backup tarballs). */
+int		ensure_archive_dir(const char *project_root);
+
+/* Checks a path: 0 = dir exists, -1 = exists but not a dir, 1 = missing. */
+int		ft_stat(const char *path);
+
+/* Wraps mkdir(2): 0 on success, -1 on failure (reported via perror). */
+int		ft_mkdir(const char *path, mode_t mode);
 
 /* Syscall wrappers that exit on failure (shared by shell + system programs). */
-int	ft_pipe(int p[2]);
-int	ft_dup2(int new_fd, int old_fd);
-int	ft_open(const char *file, int flags, int permission);
-int	ft_close(int fd);
-int	ft_fork(void);
+int		ft_pipe(int p[2]);
+int		ft_dup2(int new_fd, int old_fd);
+int		ft_open(const char *file, int flags, int permission);
+int		ft_close(int fd);
+int		ft_fork(void);
 void	ft_kill(int pid);
 
 #endif
