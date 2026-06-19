@@ -14,7 +14,7 @@
  */
 int	builtin(char **cmd, t_root *sh)
 {
-	str_to_lower(&cmd[0]);
+	ft_str_to_lower(&cmd[0]);
 	if (ft_strncmp(cmd[0], "echo", ft_strlen("echo") + 1) == 0)
 		g_exit_status = echo_command(cmd);
 	else if (ft_strncmp(cmd[0], "cd", ft_strlen("cd") + 1) == 0)

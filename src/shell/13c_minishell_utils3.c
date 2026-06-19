@@ -1,43 +1,5 @@
 #include "minishell.h"
 
-
-/**
- * @brief Calculates the length of a 2D array of strings.
- *
- * @param str Pointer to the first element of a null-terminated array of strings.
- * @return The number of strings in the array.
- */
-int	array2d_len(char **str)
-{
-	int	i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
-
-/**
- * @brief Converts a string to lowercase in-place.
- *
- * This function modifies the given string by converting all uppercase 
- * characters to lowercase.
- *
- * @param str Pointer to the string to be modified.
- */
-void	str_to_lower(char **str)
-{
-	int		i;
-
-	i = 0;
-	while ((*str)[i])
-	{
-		if ((*str)[i] >= 'A' && (*str)[i] <= 'Z')
-			(*str)[i] += 32;
-		i++;
-	}
-}
-
 /**
  * @brief Prints the elements of a command array.
  *

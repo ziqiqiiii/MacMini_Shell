@@ -36,7 +36,7 @@ int	exit_command(char **cmd, t_root *sh)
 
 	i = 0;
 	sh->exit_cmd_flag = 1;
-	if (array2d_len(cmd) == 1)
+	if (ft_array2d_len(cmd) == 1)
 		return (g_exit_status);
 	while (ft_isdigit(cmd[1][i]) || cmd[1][i] == '-' || cmd[1][i] == '+')
 		++i;
@@ -49,7 +49,7 @@ int	exit_command(char **cmd, t_root *sh)
 	}
 	else
 	{
-		if (array2d_len(cmd) > 2)
+		if (ft_array2d_len(cmd) > 2)
 		{
 			ft_putstr_fd("exit\nminishell: exit: too many arguments\n", 2);
 			sh->exit_cmd_flag = 0;

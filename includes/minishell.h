@@ -285,8 +285,6 @@ int					ft_tcgetattr(int fd, struct termios *termios_p);
 int					ft_tcsetattr(int fd, int optional_actions, \
 							struct termios *termios_p);
 
-int					array2d_len(char **str);
-void				str_to_lower(char **str);
 void				print_exec_cmd(char **cmd);
 char				*get_current_directory(void);
 
