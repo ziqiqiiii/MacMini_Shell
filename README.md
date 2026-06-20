@@ -145,7 +145,7 @@ Standalone C programs compiled into `./bin/` and resolved ahead of the system `$
 | `find`    | Recursively list files whose name contains a keyword             |
 | `ld`      | List the current directory's contents with `ls -l`-style permissions |
 | `ldr`     | Recursively list all non-hidden files with permissions           |
-| `sys`     | Print system information alongside an ASCII logo                  |
+| `sys`     | Print system information alongside an ASCII logo (Linux only; excluded from the build on macOS) |
 | `backup`  | Archive the path in `$BACKUP_DIR` into a timestamped tarball      |
 | `dspawn`  | Daemonize a process (double-fork) and log spawn events           |
 | `dplant`  | Spawn a named "plant" daemon guarded by an exclusive lock         |

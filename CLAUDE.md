@@ -52,7 +52,7 @@ Both targets invoke `scripts/gen_unit_tests.sh` / `scripts/gen_builtin_tests.sh`
 Sources are split into three groups under `src/`, each built differently by the Makefile:
 
 - `src/shell/` — every `.c` here is compiled (with AddressSanitizer on Linux) and linked into the `macmini_shell` binary. These are the numbered pipeline files (`00_`–`13_`).
-- `src/system/` — each `.c` here is a standalone program compiled into its own binary in `./bin/` (`backup`, `dcheck`, `dkill`, `dplant`, `dspawn`, `find`, `ld`, `ldr`, `sys`). They include `system_program.h`.
+- `src/system/` — each `.c` here is a standalone program compiled into its own binary in `./bin/` (`backup`, `dcheck`, `dkill`, `dplant`, `dspawn`, `find`, `ld`, `ldr`, `sys`). They include `system_program.h`. `sys.c` uses Linux-only APIs and is filtered out of `SYS_SRC` on macOS (`UNAME == Darwin`).
 - `src/common/` — helpers shared by the system programs (`perms.c`, `project.c`), archived into `obj/libcommon.a` and linked into every `bin/` program. They include `common.h`.
 
 Headers live in `includes/`: `minishell.h` (shell), `system_program.h` (system programs), `common.h` (shared helpers).

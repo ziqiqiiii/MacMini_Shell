@@ -72,6 +72,10 @@ COMMON_OBJ	:= $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # System : every .c under src/system        -> one binary each in bin/
 SYS_SRC		:= $(wildcard $(SRC_DIR)/system/*.c)
+# sys.c relies on Linux-only APIs (e.g. sysinfo); skip it on macOS.
+ifeq ($(UNAME), Darwin)
+	SYS_SRC	:= $(filter-out $(SRC_DIR)/system/sys.c, $(SYS_SRC))
+endif
 SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
 
 ################################################################################
