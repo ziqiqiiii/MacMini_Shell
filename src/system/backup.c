@@ -7,15 +7,14 @@ static char	*build_archive_path(const char *project_root, const char *base);
 static int	run_backup_tar(char *backup_path, const char *base, const char *archive_path);
 
 /**
- * @brief Archives the path specified by BACKUP_DIR into a timestamped tarball.
+ * @brief Entry point for the backup utility.
  *
- * Reads the BACKUP_DIR environment variable, creates a .tar.gz archive named
- * <basename>_<YYYYMMDD_HHMMSS>.tar.gz in <project_root>/archive/, and forks
- * a child process to run tar.
+ * Resolves the project root, reads the BACKUP_DIR target, and creates a
+ * timestamped tar.gz archive of it under the project's archive directory.
  *
  * @param argc Number of command-line arguments (unused).
  * @param argv Array of command-line arguments (unused).
- * @return 0 on success, 1 if BACKUP_DIR is unset or a system call fails.
+ * @return EXIT_SUCCESS on a successful backup, EXIT_FAILURE otherwise.
  */
 int main(int argc, char **argv) {
 	(void)		argc;
@@ -38,10 +37,14 @@ int main(int argc, char **argv) {
 }
 
 /**
- * @brief Resolves the project root and ensures its archive directory exists.
+ * @brief Resolve the project root and ensure its archive directory exists.
  *
- * @param project_root Output pointer set to a newly allocated root path.
- * @return EXIT_SUCCESS on success, EXIT_FAILURE if the archive dir can't be made.
+ * Stores the resolved root in *project_root and creates the archive
+ * directory under it if missing. On failure the allocated root is freed.
+ *
+ * @param project_root Out-param receiving the allocated project root path.
+ * @return EXIT_SUCCESS on success, EXIT_FAILURE if the archive dir cannot
+ *         be created.
  */
 static int	get_project_root(char **project_root)
 {
@@ -56,10 +59,13 @@ static int	get_project_root(char **project_root)
 }
 
 /**
- * @brief Reads the BACKUP_DIR environment variable.
+ * @brief Read the backup target path from the BACKUP_DIR environment variable.
  *
- * @param backup_path  Output pointer set to the BACKUP_DIR value.
- * @param project_root Project root, freed on failure to avoid a leak.
+ * Stores the value of BACKUP_DIR in *backup_path. If the variable is unset
+ * the previously allocated project_root is freed before returning failure.
+ *
+ * @param backup_path Out-param receiving the BACKUP_DIR value (not allocated).
+ * @param project_root Project root to free on failure.
  * @return EXIT_SUCCESS if BACKUP_DIR is set, EXIT_FAILURE otherwise.
  */
 static int	get_backup_path(char **backup_path, char *project_root)
@@ -74,14 +80,14 @@ static int	get_backup_path(char **backup_path, char *project_root)
 }
 
 /**
- * @brief Builds the archive path and runs tar, reporting the outcome.
+ * @brief Build the archive path and tar the backup target into it.
  *
- * Owns all error handling for the archiving step: prints the result message
- * and frees the archive path. The caller retains ownership of project_root.
+ * Derives the archive basename from backup_path, builds a timestamped
+ * archive path under the project root, and runs tar to create it.
  *
- * @param project_root Project root directory.
- * @param backup_path  Path being archived (modified by dirname() in tar step).
- * @return EXIT_SUCCESS if the tarball was created, EXIT_FAILURE otherwise.
+ * @param project_root Resolved project root containing the archive dir.
+ * @param backup_path Path to the directory being backed up.
+ * @return EXIT_SUCCESS on a successful archive, EXIT_FAILURE otherwise.
  */
 static int	create_backup(const char *project_root, char *backup_path)
 {
@@ -105,14 +111,15 @@ static int	create_backup(const char *project_root, char *backup_path)
 }
 
 /**
- * @brief Builds the timestamped archive path inside <project_root>/archive/.
+ * @brief Build a timestamped tar.gz archive path under the project root.
  *
- * Formats <project_root>/archive/<base>_<YYYYMMDD_HHMMSS>.tar.gz using the
- * current local time.
+ * Produces "<project_root>/archive/<base>_<YYYYmmdd_HHMMSS>.tar.gz" using
+ * the current local time.
  *
- * @param project_root Project root directory.
- * @param base         Basename of the directory being archived.
- * @return A newly allocated path string, or NULL on allocation failure.
+ * @param project_root Resolved project root containing the archive dir.
+ * @param base Basename of the backup target, used in the archive filename.
+ * @return Newly allocated archive path (caller frees), or NULL on malloc
+ *         failure.
  */
 static char	*build_archive_path(const char *project_root, const char *base)
 {
@@ -139,15 +146,16 @@ static char	*build_archive_path(const char *project_root, const char *base)
 }
 
 /**
- * @brief Forks a child to create the tarball and waits for it to finish.
+ * @brief Fork and exec tar to create the gzip archive.
  *
- * The child runs `tar -czf <archive_path> -C <dirname> <base>`. Note that
- * dirname() modifies backup_path in place.
+ * Runs "tar -czf <archive_path> -C <dirname(backup_path)> <base>" in a child
+ * process and waits for it to complete.
  *
- * @param backup_path  Path being archived (modified by dirname()).
- * @param base         Basename of backup_path passed to tar.
- * @param archive_path Destination tarball path.
- * @return EXIT_SUCCESS if tar exited 0, EXIT_FAILURE otherwise.
+ * @param backup_path Path to the backup target; dirname() is used as tar's
+ *        working directory (note: this call mutates backup_path).
+ * @param base Basename of the backup target passed to tar.
+ * @param archive_path Destination path for the created archive.
+ * @return EXIT_SUCCESS if tar exits with status 0, EXIT_FAILURE otherwise.
  */
 static int	run_backup_tar(char *backup_path, const char *base,
 				const char *archive_path)
