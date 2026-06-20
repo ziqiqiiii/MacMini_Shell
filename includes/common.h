@@ -38,7 +38,7 @@ void	perms_to_string(mode_t mode, char str[11]);
 char	*resolve_project_root(void);
 
 /* Daemonization + logging for the long-running system programs. */
-void	spawn_daemon(void);
+void	daemon_spawn(void);
 void	daemon_log(const char *project_root, const char *msg);
 
 /* Filesystem helpers: create a dir/file only if it is missing. */
@@ -61,6 +61,7 @@ int		ft_mkdir(const char *path, mode_t mode);
 int		ft_pipe(int p[2]);
 int		ft_dup2(int new_fd, int old_fd);
 int		ft_open(const char *file, int flags, int permission);
+FILE	*ft_fopen(const char *file, const char *mode);
 int		ft_close(int fd);
 int		ft_fork(void);
 void	ft_kill(int pid);

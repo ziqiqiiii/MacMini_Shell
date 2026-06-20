@@ -8,7 +8,7 @@
  * from reacquiring a terminal. Closes all open file descriptors and redirects
  * stdin/stdout/stderr to /dev/null.
  */
-void	spawn_daemon(void)
+void	daemon_spawn(void)
 {
 	pid_t	pid;
 	int		fd;
