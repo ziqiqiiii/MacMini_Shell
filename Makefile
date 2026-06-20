@@ -32,11 +32,12 @@ ifeq ($(UNAME), Linux)
 	FSAN		:= -fsanitize=address -g3
 endif
 
-# Readline for macOS
+# Readline for macOS (RL_PREFIX is lazily expanded so it resolves correctly
+# even when readline is installed by the check-readline target during a build).
 ifeq ($(UNAME), Darwin)
-	RL_PREFIX	:= $(shell brew --prefix readline)
-	READLINE	:= -lreadline -L$(RL_PREFIX)/lib
-	INC_RL		:= -I$(RL_PREFIX)/include
+	RL_PREFIX	 = $(shell brew --prefix readline)
+	READLINE	 = -lreadline -L$(RL_PREFIX)/lib
+	INC_RL		 = -I$(RL_PREFIX)/include
 endif
 
 ################################################################################
@@ -77,7 +78,25 @@ SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
 #                                   BUILD                                      #
 ################################################################################
 
-all: $(NAME) system-programs
+all: check-readline $(NAME) system-programs
+
+# --- readline detection / auto-install --------------------------------------
+# Verify the readline header + library can be found; if not, install it using
+# the platform's package manager before the build proceeds.
+check-readline:
+ifeq ($(UNAME), Linux)
+	@ if ! printf '#include <readline/readline.h>\nint main(void){return 0;}\n' \
+		| $(CC) -xc - $(INC_RL) $(READLINE) -o /dev/null >/dev/null 2>&1; then \
+		echo "$(YELLOW)readline not found — installing $(CYAN)libreadline-dev$(CLR_RMV)..."; \
+		sudo apt-get update && sudo apt-get install -y libreadline-dev; \
+	fi
+endif
+ifeq ($(UNAME), Darwin)
+	@ if ! brew --prefix readline >/dev/null 2>&1; then \
+		echo "$(YELLOW)readline not found — installing $(CYAN)readline$(CLR_RMV) via brew..."; \
+		brew install readline; \
+	fi
+endif
 
 run: all
 	@ LSAN_OPTIONS=suppressions=readline.supp ./$(NAME)
@@ -205,6 +224,6 @@ re: fclean all
 
 .PHONY:		all run system-programs unit integration test \
 			ai-unit-tests ai-builtin-tests clean fclean re \
-			reset
+			reset check-readline
 
 .PRECIOUS:	$(OBJ_DIR)/%.o
