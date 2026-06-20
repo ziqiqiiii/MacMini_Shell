@@ -92,13 +92,14 @@ ifeq ($(UNAME), Linux)
 	@ if ! printf '#include <readline/readline.h>\nint main(void){return 0;}\n' \
 		| $(CC) -xc - $(INC_RL) $(READLINE) -o /dev/null >/dev/null 2>&1; then \
 		echo "$(YELLOW)readline not found — installing $(CYAN)libreadline-dev$(CLR_RMV)..."; \
-		sudo apt-get update && sudo apt-get install -y libreadline-dev; \
+		sudo apt-get update -qq >/dev/null \
+			&& sudo apt-get install -y -qq libreadline-dev >/dev/null; \
 	fi
 endif
 ifeq ($(UNAME), Darwin)
 	@ if ! brew --prefix readline >/dev/null 2>&1; then \
 		echo "$(YELLOW)readline not found — installing $(CYAN)readline$(CLR_RMV) via brew..."; \
-		brew install readline; \
+		brew install readline >/dev/null; \
 	fi
 endif
 
