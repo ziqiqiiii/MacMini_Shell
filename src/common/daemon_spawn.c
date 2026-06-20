@@ -15,7 +15,7 @@ void	daemon_spawn(void)
 	int		null_fd;
 
 	printf("some kind of daemon spawning program\n");
-	printf("spawning a daemon, remember to run ./daemonslayer to kill them\n");
+	printf("spawning a daemon, remember to run ./daemons_killer to kill them\n");
 	pid = fork();
 	if (pid < 0)
 		exit(EXIT_FAILURE);
