@@ -1,18 +1,45 @@
 #include "system_program.h"
-#include <stdarg.h>
-#include <sys/sysinfo.h>
 
-#define MAX_LINES 32
-#define INFO_WIDTH 80
-#define MAX_LOGO_LINES 64
-#define MAX_LOGO_WIDTH 256
-
+// Static Variables
 static char *logo[MAX_LOGO_LINES];
-static int logo_count = 0;
-static int max_logo_width = 0;
-
+static int  logo_count = 0;
+static int  max_logo_width = 0;
 static char *info[MAX_LINES];
-static int info_count = 0;
+static int  info_count = 0;
+
+// Static Functions
+static void	load_logo(void);
+static void userinfo(void);
+static void resourceinfo(void);
+static void systeminfo(void);
+static void render();
+static int	utf8_display_width(const char *s);
+static void display_line(const char *disp, ...);
+
+/**
+ * @brief Entry point for the sys utility.
+ *
+ * Collects user, resource, and system information into the info buffer, then
+ * renders the ASCII logo side-by-side with the info lines. Frees all
+ * allocated info strings before returning.
+ *
+ * @param argc Number of command-line arguments (unused).
+ * @param argv Array of command-line arguments (unused).
+ * @return 0 on success.
+ */
+int main(int argc, char **argv) {
+
+        (void)  argc;
+        (void)  argv;
+
+        load_logo();
+        userinfo();
+        resourceinfo();
+        systeminfo();
+        render();
+
+        return 0;
+}
 
 static int utf8_display_width(const char *s)
 {
@@ -48,10 +75,8 @@ static void load_logo(void)
 	if (!path)
 		return;
 	snprintf(path, strlen(exe) + strlen("/logo.txt") + 1, "%s/logo.txt", exe);
-	f = fopen(path, "r");
+	f = ft_fopen(path, "r");
 	free(path);
-	if (!f)
-		return;
 	while (logo_count < MAX_LOGO_LINES && fgets(line, sizeof(line), f))
 	{
 		line_len = strlen(line);
@@ -64,6 +89,7 @@ static void load_logo(void)
 			max_logo_width = vis_w;
 		logo[logo_count++] = strdup(line);
 	}
+
 	fclose(f);
 }
 
@@ -142,11 +168,7 @@ static void systeminfo(void)
         char            osversion[256];
         struct utsname  un;
         
-        f = fopen("/etc/os-release", "r");
-        if (!f) {
-                perror("os-release");
-                return;
-        }
+        f = ft_fopen("/etc/os-release", "r");
 
         while (fgets(osversion, sizeof(osversion), f)) {
                 if (strncmp(osversion, "PRETTY_NAME=", 12) == 0) {
@@ -181,29 +203,4 @@ static void render()
                 free(logo[i]);
         for (int i = 0; i < info_count; ++i)
                 free(info[i]);
-}
-
-/**
- * @brief Entry point for the sys utility.
- *
- * Collects user, resource, and system information into the info buffer, then
- * renders the ASCII logo side-by-side with the info lines. Frees all
- * allocated info strings before returning.
- *
- * @param argc Number of command-line arguments (unused).
- * @param argv Array of command-line arguments (unused).
- * @return 0 on success.
- */
-int main(int argc, char **argv) {
-
-        (void)argc;
-        (void)argv;
-
-        load_logo();
-        userinfo();
-        resourceinfo();
-        systeminfo();
-        render();
-
-        return 0;
 }

@@ -24,6 +24,8 @@
 # include <pthread.h>
 # include <sys/file.h>
 # include <linux/limits.h>
+# include <stdarg.h>
+# include <sys/sysinfo.h>
 
 # include "libft.h"
 # include "get_next_line.h"
@@ -33,5 +35,16 @@
 # define SHELL_INPUT_DELIM " \t\r\n\a"
 # define SHELL_OPT_DELIM "-"
 # define MAX_DAEMONS 64
+
+# define MAX_LINES 32
+# define INFO_WIDTH 80
+# define MAX_LOGO_LINES 64
+# define MAX_LOGO_WIDTH 256
+
+typedef struct {
+        char name[64];
+        pid_t pid;
+        char timestamp[128];
+} DaemonInfo;
 
 #endif
