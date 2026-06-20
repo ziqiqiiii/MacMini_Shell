@@ -15,6 +15,8 @@
 # include <sys/file.h>
 # include <sys/stat.h>
 
+# include "libft.h"
+
 /*
 ** Helpers shared across the standalone system programs (bin/).
 ** Linked into each program through libcommon.a.
@@ -32,12 +34,36 @@
 /* Renders a stat(2) mode into an "ls -l" style permission string. */
 void	perms_to_string(mode_t mode, char str[11]);
 
-/* Absolute path of the project root, resolved from /proc/self/exe. */
-extern char	project_root[PATH_MAX];
-void	resolve_project_root(void);
+/* Resolves the project root from /proc/self/exe; returns a malloc'd string. */
+char	*resolve_project_root(void);
 
 /* Daemonization + logging for the long-running system programs. */
-void	spawn_daemon(void);
-void	daemon_log(const char *msg);
+void	daemon_spawn(void);
+void	daemon_log(const char *project_root, const char *msg);
+
+/* Filesystem helpers: create a dir/file only if it is missing. */
+int		create_dir_if_missing(const char *path, mode_t mode);
+int		create_file_if_missing(const char *path, mode_t mode);
+
+/* Ensures <project_root>/tmp and the daemon registry/log files exist. */
+void	ensure_daemon_files(const char *project_root);
+
+/* Ensures <project_root>/archive exists (for backup tarballs). */
+int		ensure_archive_dir(const char *project_root);
+
+/* Checks a path: 0 = dir exists, -1 = exists but not a dir, 1 = missing. */
+int		ft_stat(const char *path);
+
+/* Wraps mkdir(2): 0 on success, -1 on failure (reported via perror). */
+int		ft_mkdir(const char *path, mode_t mode);
+
+/* Syscall wrappers that exit on failure (shared by shell + system programs). */
+int		ft_pipe(int p[2]);
+int		ft_dup2(int new_fd, int old_fd);
+int		ft_open(const char *file, int flags, int permission);
+FILE	*ft_fopen(const char *file, const char *mode);
+int		ft_close(int fd);
+int		ft_fork(void);
+void	ft_kill(int pid);
 
 #endif

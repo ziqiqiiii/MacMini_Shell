@@ -67,7 +67,7 @@ run_unit() {
 }
 
 run_integration() {
-  export ASAN_OPTIONS=detect_leaks=0
+  
   local skipped=0
   for s in "$@"; do
     [ -f "$s" ] || continue

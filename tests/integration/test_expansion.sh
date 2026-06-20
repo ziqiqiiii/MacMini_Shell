@@ -4,7 +4,7 @@
 # Verifies variable expansion: $VAR, $?, quoted strings.
 
 set -euo pipefail
-export ASAN_OPTIONS=detect_leaks=0
+
 SHELL_BIN=./macmini_shell
 FAIL=0
 

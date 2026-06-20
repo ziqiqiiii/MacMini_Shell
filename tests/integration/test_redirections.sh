@@ -4,7 +4,7 @@
 # Verifies input/output redirections: >, >>, <, and combinations.
 
 set -euo pipefail
-export ASAN_OPTIONS=detect_leaks=0
+
 SHELL_BIN=./macmini_shell
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT

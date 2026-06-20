@@ -77,6 +77,15 @@ static int	tilda_dash_helper(char **dir, t_list **env_list)
 	return (EXIT_SUCCESS);
 }
 
+/**
+ * @brief Record the previous directory into OLDPWD.
+ *
+ * Builds "OLDPWD=<cwd>" and stores it in the environment via the export
+ * builtin (using the setenv command form).
+ *
+ * @param cwd The working directory to remember as OLDPWD.
+ * @param env_list Pointer to the environment list.
+ */
 static void	set_old_pwd(char cwd[256], t_list **env_list)
 {
 	char	*pair;
@@ -91,12 +100,25 @@ static void	set_old_pwd(char cwd[256], t_list **env_list)
 	free(pair);
 }
 
+/**
+ * @brief Replace a lone "~" argument with the HOME directory.
+ *
+ * @param dir Pointer to the directory string; freed and replaced with HOME.
+ * @param env_list Pointer to the environment list.
+ */
 static void	expand_tilda_only(char **dir, t_list **env_list)
 {
 	free(*dir);
 	*dir = ft_strdup(existed_env("HOME", env_list));
 }
 
+/**
+ * @brief Replace a "-" argument with the OLDPWD directory.
+ *
+ * @param dir Pointer to the directory string; freed and replaced with OLDPWD.
+ * @param env_list Pointer to the environment list.
+ * @return EXIT_SUCCESS on success, EXIT_FAILURE if OLDPWD is not set.
+ */
 static int	expand_dash(char **dir, t_list **env_list)
 {
 	char	*tmp;
@@ -112,6 +134,16 @@ static int	expand_dash(char **dir, t_list **env_list)
 	return (EXIT_SUCCESS);
 }
 
+/**
+ * @brief Expand a leading "~/" path into "<HOME>/...".
+ *
+ * Joins HOME with the path starting at the first slash, replacing the
+ * original string.
+ *
+ * @param dir Pointer to the directory string; freed and replaced.
+ * @param slash_ptr Pointer to the first '/' within the original string.
+ * @param env_list Pointer to the environment list.
+ */
 static void	expand_tilda_slash(char **dir, char *slash_ptr, t_list **env_list)
 {
 	char	*tmp;

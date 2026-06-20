@@ -1,47 +1,6 @@
 #include "minishell.h"
 
 /**
- * @brief Forks a child process, exiting on failure.
- *
- * Calls fork(2) and terminates the process with an error message if
- * the system call fails.
- *
- * @return The PID of the child process in the parent (0 in the child),
- *         or exits on failure.
- */
-int	ft_fork(void)
-{
-	pid_t	child;
-
-	child = fork();
-	if (child < 0)
-	{
-		printf("fork: %d\n", getpid());
-		ft_putstr_fd("Error: Failed to create child process\n", 2);
-		exit(EXIT_FAILURE);
-	}
-	return (child);
-}
-
-/**
- * @brief Sends SIGKILL to a stopped child process and waits for it to terminate.
- *
- * Checks if the child indicated by g_exit_status was stopped (WIFSTOPPED).
- * If so, kills it with SIGKILL and waits for the process to fully exit.
- *
- * @param pid The PID of the child process to kill.
- */
-void ft_kill(int pid)
-{
-	if (WIFSTOPPED(g_exit_status))
-	{
-		kill(pid, SIGKILL);
-		waitpid(pid, &g_exit_status, 0);
-	}
-}
-
-
-/**
  * @brief Wraps the tcgetattr function, providing error handling.
  *
  * This function retrieves the parameters associated with the 
@@ -85,4 +44,24 @@ int	ft_tcsetattr(int fd, int optional_actions, struct termios *termios_p)
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);
+}
+
+/**
+ * @brief Prints the elements of a command array.
+ *
+ * This function prints the elements of a null-terminated array of strings, 
+ * representing command arguments.
+ *
+ * @param cmd Pointer to the array of command arguments.
+ */
+void	print_exec_cmd(char **cmd)
+{
+	int	i;
+
+	i = 0;
+	while (cmd[i] != NULL)
+	{
+		printf("argv[%d]: |%s|\n", i, cmd[i]);
+		i++;
+	}
 }

@@ -80,7 +80,7 @@ SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
 all: $(NAME) system-programs
 
 run: all
-	@ ./$(NAME)
+	@ LSAN_OPTIONS=suppressions=readline.supp ./$(NAME)
 
 # --- shell object rule (ASan-instrumented, mirrors src/ tree under obj/) -----
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -105,9 +105,9 @@ $(COMMON_LIB): $(COMMON_OBJ)
 	@ echo "\n$(GREEN)[Success] $(BLUE)libcommon.a$(CLR_RMV) created ✔️"
 
 # --- shell binary -----------------------------------------------------------
-$(NAME): $(LIBFT) $(SHELL_OBJ)
+$(NAME): $(LIBFT) $(COMMON_LIB) $(SHELL_OBJ)
 	@ echo "\n$(GREEN)Compilation $(CLR_RMV)of $(BLUE)$(NAME)$(CLR_RMV)..."
-	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
+	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(COMMON_LIB) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
 	@ echo "$(GREEN)[Success] $(BLUE)$(NAME)$(CLR_RMV) created ✔️"
 
 ################################################################################
@@ -190,6 +190,13 @@ fclean: clean
 	@ $(MAKE) fclean -C $(LIBFT_DIR)
 	@ echo "$(RED)Deleting $(BLUE)$(NAME)$(CLR_RMV) binary ✔️"
 
+reset: fclean
+	@ echo "$(RED)Deleting $(BLUE)./tmp$(CLR_RMV) dir ✔️"
+	@ $(RM) ./tmp
+	@ echo "$(RED)Deleting $(BLUE)./archive$(CLR_RMV) dir ✔️"
+	@ $(RM) ./archive
+	@ echo "$(RED)Resetting project... All generated files deleted ✔️"
+
 re: fclean all
 
 ################################################################################
@@ -197,6 +204,7 @@ re: fclean all
 ################################################################################
 
 .PHONY:		all run system-programs unit integration test \
-			ai-unit-tests ai-builtin-tests clean fclean re
+			ai-unit-tests ai-builtin-tests clean fclean re \
+			reset
 
 .PRECIOUS:	$(OBJ_DIR)/%.o

@@ -5,14 +5,14 @@
 # whitespace handling, and resilience.
 
 set -euo pipefail
-export ASAN_OPTIONS=detect_leaks=0
+
 SHELL_BIN=./macmini_shell
 FAIL=0
 
-# 1. Multiple commands in one session
 INPUT=$(printf "ld\n\n\nnotacommand_xyz\nld\nexit\n")
 OUTPUT=$(echo "$INPUT" | timeout 3s $SHELL_BIN 2>&1)
 
+# 1. Multiple commands in one session
 COUNT=$(echo "$OUTPUT" | grep -c "files" || true)
 if [ "$COUNT" -lt 2 ]; then
   echo "FAIL: ld should run at least twice, got $COUNT"
