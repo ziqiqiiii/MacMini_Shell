@@ -12,8 +12,7 @@ make clean    # remove object files
 make fclean   # remove object files and binary
 ```
 
-**Linux / WSL prerequisite:** `sudo apt install libreadline-dev`  
-**macOS prerequisite:** `brew install readline`
+**Readline:** `make` runs a `check-readline` target before building that auto-installs readline if missing — `libreadline-dev` via `sudo apt-get` on Linux/WSL, `readline` via `brew` on macOS. To install manually: `sudo apt install libreadline-dev` (Linux/WSL) or `brew install readline` (macOS).
 
 The binary is named `macmini_shell`. Compiled with `-Wall -Wextra -Werror`. On Linux the build also enables `-fsanitize=address -g3`.
 

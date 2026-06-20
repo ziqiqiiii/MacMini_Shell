@@ -42,6 +42,13 @@ A POSIX-like shell implemented in C. Supports interactive prompts, command histo
 
 ### Readline
 
+`make` automatically checks for readline before building and installs it for you
+if it is missing (`libreadline-dev` via `apt` on Linux/WSL, `readline` via Homebrew
+on macOS). The Linux path uses `sudo apt-get install`, so you may be prompted for
+your password during the first build.
+
+To install it manually instead:
+
 **Linux (Debian/Ubuntu)**
 ```bash
 sudo apt install libreadline-dev
