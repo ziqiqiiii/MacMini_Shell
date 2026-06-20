@@ -1,19 +1,55 @@
 #include "system_program.h"
-#include <stdarg.h>
-#include <sys/sysinfo.h>
 
-#define MAX_LINES 32
-#define INFO_WIDTH 80
-#define MAX_LOGO_LINES 64
-#define MAX_LOGO_WIDTH 256
-
+// Static Variables
 static char *logo[MAX_LOGO_LINES];
-static int logo_count = 0;
-static int max_logo_width = 0;
-
+static int  logo_count = 0;
+static int  max_logo_width = 0;
 static char *info[MAX_LINES];
-static int info_count = 0;
+static int  info_count = 0;
 
+// Static Functions
+static void	load_logo(void);
+static void userinfo(void);
+static void resourceinfo(void);
+static void systeminfo(void);
+static void render();
+static int	utf8_display_width(const char *s);
+static void display_line(const char *disp, ...);
+
+/**
+ * @brief Entry point for the sys utility.
+ *
+ * Collects user, resource, and system information into the info buffer, then
+ * renders the ASCII logo side-by-side with the info lines. Frees all
+ * allocated info strings before returning.
+ *
+ * @param argc Number of command-line arguments (unused).
+ * @param argv Array of command-line arguments (unused).
+ * @return 0 on success.
+ */
+int main(int argc, char **argv) {
+
+        (void)  argc;
+        (void)  argv;
+
+        load_logo();
+        userinfo();
+        resourceinfo();
+        systeminfo();
+        render();
+
+        return 0;
+}
+
+/**
+ * @brief Count the display width of a UTF-8 string.
+ *
+ * Counts only leading bytes (ignoring 0x80-prefixed continuation bytes) so
+ * multi-byte characters contribute a single display column.
+ *
+ * @param s NUL-terminated UTF-8 string.
+ * @return Number of display columns the string occupies.
+ */
 static int utf8_display_width(const char *s)
 {
 	int w = 0;
@@ -26,6 +62,13 @@ static int utf8_display_width(const char *s)
 	return w;
 }
 
+/**
+ * @brief Load the ASCII logo from logo.txt next to the executable.
+ *
+ * Resolves the executable's directory via /proc/self/exe, reads
+ * "<dir>/logo.txt" line by line into the global logo array (stripping CR/LF),
+ * and tracks the widest line in max_logo_width for later alignment.
+ */
 static void load_logo(void)
 {
 	char	line[MAX_LOGO_WIDTH];
@@ -48,10 +91,8 @@ static void load_logo(void)
 	if (!path)
 		return;
 	snprintf(path, strlen(exe) + strlen("/logo.txt") + 1, "%s/logo.txt", exe);
-	f = fopen(path, "r");
+	f = ft_fopen(path, "r");
 	free(path);
-	if (!f)
-		return;
 	while (logo_count < MAX_LOGO_LINES && fgets(line, sizeof(line), f))
 	{
 		line_len = strlen(line);
@@ -64,6 +105,7 @@ static void load_logo(void)
 			max_logo_width = vis_w;
 		logo[logo_count++] = strdup(line);
 	}
+
 	fclose(f);
 }
 
@@ -142,11 +184,7 @@ static void systeminfo(void)
         char            osversion[256];
         struct utsname  un;
         
-        f = fopen("/etc/os-release", "r");
-        if (!f) {
-                perror("os-release");
-                return;
-        }
+        f = ft_fopen("/etc/os-release", "r");
 
         while (fgets(osversion, sizeof(osversion), f)) {
                 if (strncmp(osversion, "PRETTY_NAME=", 12) == 0) {
@@ -166,6 +204,13 @@ static void systeminfo(void)
         display_line("Kernel:             %s  %s  (%s)", un.sysname, un.release, un.machine);
 }
 
+/**
+ * @brief Render the logo and info buffers side by side, then free them.
+ *
+ * Prints each row with the logo on the left (padded to max_logo_width) and
+ * the corresponding info line on the right, then frees all logo and info
+ * strings.
+ */
 static void render()
 {
         int lines = (logo_count > info_count) ? logo_count : info_count;
@@ -181,29 +226,4 @@ static void render()
                 free(logo[i]);
         for (int i = 0; i < info_count; ++i)
                 free(info[i]);
-}
-
-/**
- * @brief Entry point for the sys utility.
- *
- * Collects user, resource, and system information into the info buffer, then
- * renders the ASCII logo side-by-side with the info lines. Frees all
- * allocated info strings before returning.
- *
- * @param argc Number of command-line arguments (unused).
- * @param argv Array of command-line arguments (unused).
- * @return 0 on success.
- */
-int main(int argc, char **argv) {
-
-        (void)argc;
-        (void)argv;
-
-        load_logo();
-        userinfo();
-        resourceinfo();
-        systeminfo();
-        render();
-
-        return 0;
 }

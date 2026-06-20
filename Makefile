@@ -32,11 +32,12 @@ ifeq ($(UNAME), Linux)
 	FSAN		:= -fsanitize=address -g3
 endif
 
-# Readline for macOS
+# Readline for macOS (RL_PREFIX is lazily expanded so it resolves correctly
+# even when readline is installed by the check-readline target during a build).
 ifeq ($(UNAME), Darwin)
-	RL_PREFIX	:= $(shell brew --prefix readline)
-	READLINE	:= -lreadline -L$(RL_PREFIX)/lib
-	INC_RL		:= -I$(RL_PREFIX)/include
+	RL_PREFIX	 = $(shell brew --prefix readline)
+	READLINE	 = -lreadline -L$(RL_PREFIX)/lib
+	INC_RL		 = -I$(RL_PREFIX)/include
 endif
 
 ################################################################################
@@ -71,16 +72,39 @@ COMMON_OBJ	:= $(COMMON_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # System : every .c under src/system        -> one binary each in bin/
 SYS_SRC		:= $(wildcard $(SRC_DIR)/system/*.c)
+# sys.c relies on Linux-only APIs (e.g. sysinfo); skip it on macOS.
+ifeq ($(UNAME), Darwin)
+	SYS_SRC	:= $(filter-out $(SRC_DIR)/system/sys.c, $(SYS_SRC))
+endif
 SYS_BINS	:= $(SYS_SRC:$(SRC_DIR)/system/%.c=$(BIN_DIR)/%)
 
 ################################################################################
 #                                   BUILD                                      #
 ################################################################################
 
-all: $(NAME) system-programs
+all: check-readline $(NAME) system-programs
+
+# --- readline detection / auto-install --------------------------------------
+# Verify the readline header + library can be found; if not, install it using
+# the platform's package manager before the build proceeds.
+check-readline:
+ifeq ($(UNAME), Linux)
+	@ if ! printf '#include <readline/readline.h>\nint main(void){return 0;}\n' \
+		| $(CC) -xc - $(INC_RL) $(READLINE) -o /dev/null >/dev/null 2>&1; then \
+		echo "$(YELLOW)readline not found — installing $(CYAN)libreadline-dev$(CLR_RMV)..."; \
+		sudo apt-get update -qq >/dev/null \
+			&& sudo apt-get install -y -qq libreadline-dev >/dev/null; \
+	fi
+endif
+ifeq ($(UNAME), Darwin)
+	@ if ! brew --prefix readline >/dev/null 2>&1; then \
+		echo "$(YELLOW)readline not found — installing $(CYAN)readline$(CLR_RMV) via brew..."; \
+		brew install readline >/dev/null; \
+	fi
+endif
 
 run: all
-	@ ./$(NAME)
+	@ LSAN_OPTIONS=suppressions=readline.supp ./$(NAME)
 
 # --- shell object rule (ASan-instrumented, mirrors src/ tree under obj/) -----
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -105,9 +129,9 @@ $(COMMON_LIB): $(COMMON_OBJ)
 	@ echo "\n$(GREEN)[Success] $(BLUE)libcommon.a$(CLR_RMV) created ✔️"
 
 # --- shell binary -----------------------------------------------------------
-$(NAME): $(LIBFT) $(SHELL_OBJ)
+$(NAME): $(LIBFT) $(COMMON_LIB) $(SHELL_OBJ)
 	@ echo "\n$(GREEN)Compilation $(CLR_RMV)of $(BLUE)$(NAME)$(CLR_RMV)..."
-	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
+	@ $(CC) $(FLAGS) $(FSAN) $(SHELL_OBJ) $(COMMON_LIB) $(LIBFT) $(LIB) $(READLINE) -o $(NAME)
 	@ echo "$(GREEN)[Success] $(BLUE)$(NAME)$(CLR_RMV) created ✔️"
 
 ################################################################################
@@ -190,6 +214,13 @@ fclean: clean
 	@ $(MAKE) fclean -C $(LIBFT_DIR)
 	@ echo "$(RED)Deleting $(BLUE)$(NAME)$(CLR_RMV) binary ✔️"
 
+reset: fclean
+	@ echo "$(RED)Deleting $(BLUE)./tmp$(CLR_RMV) dir ✔️"
+	@ $(RM) ./tmp
+	@ echo "$(RED)Deleting $(BLUE)./archive$(CLR_RMV) dir ✔️"
+	@ $(RM) ./archive
+	@ echo "$(RED)Resetting project... All generated files deleted ✔️"
+
 re: fclean all
 
 ################################################################################
@@ -197,6 +228,7 @@ re: fclean all
 ################################################################################
 
 .PHONY:		all run system-programs unit integration test \
-			ai-unit-tests ai-builtin-tests clean fclean re
+			ai-unit-tests ai-builtin-tests clean fclean re \
+			reset check-readline
 
 .PRECIOUS:	$(OBJ_DIR)/%.o

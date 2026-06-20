@@ -64,5 +64,6 @@ macmini_shell
 *.tmp*
 .txt
 tmp/
+archive/
 failed_cmd.md
 quote.md

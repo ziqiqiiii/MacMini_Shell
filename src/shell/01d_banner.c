@@ -20,6 +20,14 @@ void	print_banner(t_root *sh)
 	printf("\n");
 }
 
+/**
+ * @brief Print the banner art from the project's banner.txt.
+ *
+ * Opens "<sh->current_dir>/banner.txt" and writes its contents line by line
+ * to standard output.
+ *
+ * @param sh Shell root state providing the project directory.
+ */
 static void load_banner(t_root *sh)
 {
 	int		fd;

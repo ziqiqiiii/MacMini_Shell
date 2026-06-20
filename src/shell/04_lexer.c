@@ -71,9 +71,16 @@ static char	**tokenizer(char *cmd)
 	}
 	tokens = ft_calloc(token_num + 1, sizeof(char *));
 	if (!tokens)
+	{
+		free(cmd);
 		return (NULL);
+	}
 	cmd_modifier(cmd, tokens);
-	if (!tokens || !*tokens)
+	if (!*tokens)
+	{
+		free(tokens);
+		free(cmd);
 		return (NULL);
+	}
 	return (tokens);
 }

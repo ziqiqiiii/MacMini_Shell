@@ -17,13 +17,15 @@
 # include <signal.h>
 # include <sys/resource.h>
 # include <sys/stat.h>
-# include <sys/types.h>
 # include <sys/utsname.h>
 # include <syslog.h>
 # include <time.h>
 # include <libgen.h>
 # include <pthread.h>
 # include <sys/file.h>
+# include <linux/limits.h>
+# include <stdarg.h>
+# include <sys/sysinfo.h>
 
 # include "libft.h"
 # include "get_next_line.h"
@@ -34,7 +36,15 @@
 # define SHELL_OPT_DELIM "-"
 # define MAX_DAEMONS 64
 
-void spawn_daemon(void);
-void daemon_log(const char *tolog);
+# define MAX_LINES 32
+# define INFO_WIDTH 80
+# define MAX_LOGO_LINES 64
+# define MAX_LOGO_WIDTH 256
+
+typedef struct {
+        char name[64];
+        pid_t pid;
+        char timestamp[128];
+} DaemonInfo;
 
 #endif

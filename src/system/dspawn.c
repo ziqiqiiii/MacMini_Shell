@@ -1,192 +1,129 @@
 #include "system_program.h"
 
+static void     daemon_register(const char *project_root, const char *name);
+static void     daemon_spawn_log(const char *project_root);
+static void     daemon_work(const char *project_root);
 
 /**
- * @brief Daemonizes the current process using a double-fork.
+ * @brief Entry point for the dspawn daemon launcher.
  *
- * Performs the standard Unix daemonization sequence: first fork exits the
- * parent, setsid() creates a new session, a second fork prevents the daemon
- * from reacquiring a terminal. Closes all open file descriptors and redirects
- * stdin/stdout/stderr to /dev/null.
- */
-void spawn_daemon(void) {
-        printf("some kind of daemon spawning program\n");
-        printf(
-            "spawning a daemon, remember to run ./daemonslayer to kill them\n");
-        // first fork
-        pid_t pid = fork();
-        if (pid < 0)
-                exit(EXIT_FAILURE);
-        if (pid > 0)
-                exit(EXIT_SUCCESS);
-
-        if (setsid() < 0)
-                exit(EXIT_FAILURE);
-
-        // disable signals
-        signal(SIGCHLD, SIG_IGN);
-        signal(SIGHUP, SIG_IGN);
-
-        // second child fork
-        pid = fork();
-        if (pid < 0)
-                exit(EXIT_FAILURE);
-        if (pid > 0)
-                exit(EXIT_SUCCESS);
-
-        umask(0); // allow daemon perms
-        // chdir("/"); //change wd to / (always exists)
-        // staying in projects root to write to tmp
-
-        // close all fd
-        for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
-                close(fd);
-
-        // dump stdin to /dev/null
-        int null_fd = open("/dev/null", O_RDWR);
-        if (null_fd != -1) {
-                dup2(null_fd, STDIN_FILENO);
-                dup2(null_fd, STDOUT_FILENO);
-                dup2(null_fd, STDERR_FILENO);
-                if (null_fd > 2)
-                        close(null_fd);
-        }
-}
-
-/**
- * @brief Appends a spawn event for the dspawn daemon to the log file.
- *
- * Writes a timestamped entry to tmp/dspawn.log recording the current PID.
- */
-void daemon_spawn_log(void) {
-        char log_path[PATH_MAX];
-        strncpy(log_path, project_root, sizeof(log_path) - 1);
-        strncat(log_path, "/tmp/dspawn.log",
-                sizeof(log_path) - strlen(log_path) - 1);
-
-        int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd == -1) {
-                perror("log open");
-                return;
-        }
-
-        time_t now = time(NULL);
-        dprintf(fd, "%sStarted dspawn daemon [%d].\n", ctime(&now), getpid());
-        close(fd);
-}
-
-/**
- * @brief Appends an arbitrary message from the daemon to the log file.
- *
- * Writes a timestamped entry to tmp/dspawn.log containing the current PID
- * and the provided message string.
- *
- * @param msg Message string to record in the log.
- */
-void daemon_log(const char *msg) {
-        char log_path[PATH_MAX];
-        strncpy(log_path, project_root, sizeof(log_path) - 1);
-        strncat(log_path, "/tmp/dspawn.log",
-                sizeof(log_path) - strlen(log_path) - 1);
-
-        int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd == -1) {
-                perror("log open");
-                return;
-        }
-
-        time_t now = time(NULL);
-        dprintf(fd, "%sLogging dspawn daemon [%d] message: %s.\n", ctime(&now),
-                getpid(), msg);
-        close(fd);
-}
-
-/**
- * @brief Registers a daemon by writing its name, PID, and timestamp to the registry.
- *
- * Appends an entry to tmp/daemons.reg. If a daemon with the same name already
- * exists, a numeric suffix (.1, .2, …) is appended to the stored name to
- * avoid collisions.
- *
- * @param name Base name to register for the current daemon process.
- */
-void daemon_register(const char *name) {
-        char reg_path[PATH_MAX];
-        strncpy(reg_path, project_root, sizeof(reg_path) - 1);
-        strncat(reg_path, "/tmp/daemons.reg",
-                sizeof(reg_path) - strlen(reg_path) - 1);
-
-        // check for daemons created with the same name and add a number to
-        // differentiate it
-        FILE *fp = fopen(reg_path, "r");
-        int count = 0;
-
-        if (fp) {
-                char line[1024];
-                while (fgets(line, sizeof(line), fp)) {
-                        if (strncmp(line, name, strlen(name)) == 0 &&
-                            (line[strlen(name)] == ' ' ||
-                             line[strlen(name)] == '.'))
-                                count++;
-                }
-                fclose(fp);
-        }
-
-        char modified_name[64];
-        if (count == 0)
-                snprintf(modified_name, sizeof(modified_name), "%s", name);
-        else
-                snprintf(modified_name, sizeof(modified_name), "%s.%d", name,
-                         count);
-
-        // add entry
-        int fd = open(reg_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd == -1) {
-                perror("daemon register logs open");
-                return;
-        }
-
-        time_t now = time(NULL);
-        char *ts = ctime(&now);
-        if (ts)
-                ts[strcspn(ts, "\n")] = 0;
-
-        dprintf(fd, "%s %d %s\n", modified_name, getpid(), ts);
-        close(fd);
-}
-
-/**
- * @brief Main event loop of the dspawn daemon.
- *
- * Runs indefinitely, logging one work-cycle message every 10 seconds.
- */
-void daemon_work(void) {
-        while (1) {
-                daemon_log("one work cycle");
-                sleep(10);
-        }
-}
-
-/**
- * @brief Entry point for the dspawn daemon.
- *
- * Resolves the project root, daemonizes the process, registers itself under
- * the name "dspawnowo", logs the spawn event, and enters the work loop.
+ * Resolves the project root, ensures the daemon bookkeeping files exist,
+ * daemonises the process, registers the new daemon, logs its startup, and
+ * enters the perpetual work loop.
  *
  * @param argc Number of command-line arguments (unused).
  * @param argv Array of command-line arguments (unused).
- * @return 0 (never reached in normal operation).
+ * @return 0 (the work loop runs until the process is killed).
  */
-int main(int argc, char **argv) {
-        (void)argc;
-        (void)argv;
+int main(int argc, char **argv)
+{
+	(void)  argc;
+	(void)  argv;
 
-        resolve_project_root();
-        spawn_daemon();
-        daemon_register("dspawnowo");
-        daemon_spawn_log();
-        daemon_log("test");
-        daemon_work();
+	char *project_root = resolve_project_root();
 
-        return 0;
+	ensure_daemon_files(project_root);
+	daemon_spawn();
+	daemon_register(project_root, "deamon_eskimo");
+	daemon_spawn_log(project_root);
+	daemon_log(project_root, "start of new deamon before deamon work");
+	daemon_work(project_root);
+
+	free(project_root);
+
+	return 0;
+}
+
+/**
+ * @brief Append a startup record for this daemon to tmp/dspawn.log.
+ *
+ * Opens (creating if needed) "<project_root>/tmp/dspawn.log" and writes a
+ * timestamped line containing the daemon's PID.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ */
+static void daemon_spawn_log(const char *project_root)
+{
+	char	log_path[PATH_MAX];
+	int 	fd;
+	time_t	now;
+
+	strncpy(log_path, project_root, sizeof(log_path) - 1);
+	strncat(log_path, "/tmp/dspawn.log", sizeof(log_path) - strlen(log_path) - 1);
+
+	fd = ft_open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+	now = time(NULL);
+	dprintf(fd, "%sStarted dspawn daemon [%d].\n", ctime(&now), getpid());
+	
+	close(fd);
+}
+
+/**
+ * @brief Register the running daemon in tmp/daemons.reg.
+ *
+ * Scans the registry for existing entries sharing the same base name and,
+ * if any exist, suffixes the name with ".<count>" to keep it unique. Appends
+ * a line of "<name> <pid> <timestamp>" to the registry.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ * @param name Base name to register the daemon under.
+ */
+static void daemon_register(const char *project_root, const char *name)
+{
+	char	reg_path[PATH_MAX];
+	FILE	*fp ;
+	int		count = 0;
+	char	modified_name[64];
+	int		fd;
+	time_t	now;
+	char	*ts;
+
+	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
+	strncat(reg_path, "/tmp/daemons.reg", sizeof(reg_path) - strlen(reg_path) - 1);
+
+	// check for daemons created with the same name and add a number to
+	// differentiate it
+	fp = ft_fopen(reg_path, "r");
+
+	if (fp)
+	{
+		char line[1024];
+		while (fgets(line, sizeof(line), fp))
+		{
+			if (strncmp(line, name, strlen(name)) == 0 && (line[strlen(name)] == ' ' || line[strlen(name)] == '.'))
+				count++;
+		}
+		fclose(fp);
+	}
+
+	if (count == 0)
+		snprintf(modified_name, sizeof(modified_name), "%s", name);
+	else
+		snprintf(modified_name, sizeof(modified_name), "%s.%d", name, count);
+
+	// add entry
+	fd = ft_open(reg_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+	now = time(NULL);
+	ts = ctime(&now);
+	if (ts)
+		ts[strcspn(ts, "\n")] = 0;
+	dprintf(fd, "%s %d %s\n", modified_name, getpid(), ts);
+	close(fd);
+}
+
+/**
+ * @brief Perpetual daemon work loop.
+ *
+ * Logs a heartbeat message once per cycle and sleeps 10 seconds between
+ * cycles. Never returns; the daemon runs until it is killed.
+ *
+ * @param project_root Resolved project root used for logging.
+ */
+static void daemon_work(const char *project_root)
+{
+	while (1)
+	{
+		daemon_log(project_root, "deamon one work cycle");
+		sleep(10);
+	}
 }

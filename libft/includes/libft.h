@@ -84,4 +84,9 @@ void	ft_lstclear(t_list **lst, void (*del)(void *));
 void	ft_lstiter(t_list *lst, void (*f)(void *));
 t_list	*ft_lstmap(t_list *lst, void *(*f)(void *), void (*del)(void *));
 
+/* UTILS */
+
+int		ft_array2d_len(char **str);
+void	ft_str_to_lower(char **str);
+
 #endif

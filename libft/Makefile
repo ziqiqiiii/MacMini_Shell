@@ -21,7 +21,7 @@ SRC = $(addprefix ft_, $(addsuffix .c, \
 		substr strjoin strtrim split itoa itoa_base strmapi striteri \
 		putchar_fd putstr_fd putendl_fd putnbr_fd \
 		lstnew lstadd_front lstsize lstlast lstadd_back lstdelone \
-		lstclear lstiter lstmap)) get_next_line.c
+		lstclear lstiter lstmap array2d_len str_to_lower)) get_next_line.c
 OBJ_DIR = ./obj/
 OBJ = $(SRC:%.c=$(OBJ_DIR)%.o)
 

@@ -27,6 +27,7 @@
 
 # include "libft.h"
 # include "get_next_line.h"
+# include "common.h"
 
 # define GREEN	"\033[1;32m"
 # define BLUE	"\033[1;34m"
@@ -274,20 +275,10 @@ void				free_tree(t_tree *node);
 
 /* 13_MINISHELL_UTILS */
 
-int					ft_pipe(int p[2]);
-int					ft_dup2(int new_fd, int old_fd);
-int					ft_open(const char *file, int flags, int permission);
-int					ft_close(int fd);
-
-int					ft_fork(void);
-void 				ft_kill(int pid);
 int					ft_tcgetattr(int fd, struct termios *termios_p);
 int					ft_tcsetattr(int fd, int optional_actions, \
 							struct termios *termios_p);
 
-int					array2d_len(char **str);
-void				str_to_lower(char **str);
 void				print_exec_cmd(char **cmd);
-char				*get_current_directory(void);
 
 #endif
