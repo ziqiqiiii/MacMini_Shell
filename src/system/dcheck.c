@@ -1,120 +1,103 @@
 #include "system_program.h"
 
+static void	dcheck(const char *project_root);
+static void	dcheck_graveyard(const char *project_root);
 
-/**
- * @brief Displays the status of all registered daemons.
- *
- * Reads tmp/daemons.reg and prints each entry with its name, PID, start
- * timestamp, and whether the process is still alive (checked via /proc/<pid>).
- * Prints a summary count of active daemons at the end.
- */
-void dcheck(const char *project_root) {
-        char reg_path[PATH_MAX];
-        strncpy(reg_path, project_root, sizeof(reg_path) - 1);
-        strncat(reg_path, "/tmp/daemons.reg",
-                sizeof(reg_path) - strlen(reg_path) - 1);
+int main(int argc, char **argv)
+{
+	(void)	argc;
+	(void)	argv;
 
-        // check for daemons created with the same name and add a number to
-        // differentiate it
-        FILE *fd = fopen(reg_path, "r");
-        int count = 0;
+	char	*project_root;
 
-        if (!fd) {
-                perror("dcheck open reg");
-                return;
-        }
-        char line[1024];
-        printf("------------------------------------------\n");
-        printf("Registered Daemons (%s)\n", "tmp/daemons.reg");
-        printf("------------------------------------------\n");
+	project_root = resolve_project_root();
+	ensure_daemon_files(project_root);
 
-        while (fgets(line, sizeof(line), fd)) {
-                char name[128], ts[128];
-                int pid;
+	dcheck(project_root);
+	dcheck_graveyard(project_root);
 
-                if (sscanf(line, "%s %d %[^\n]", name, &pid, ts) != 3)
-                        continue;
+	free(project_root);
 
-                char proc_path[128];
-                snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
-                int check = (access(proc_path, F_OK) == 0);
-
-                if (check)
-                        ++count;
-
-                printf("[%c] %-12s \tPID: %-6d %s%s\n", check ? '1' : '-', name,
-                       pid, check ? "Started: " : "(inactive)",
-                       check ? ts : "");
-        }
-        fclose(fd);
-        printf("------------------------------------------\n");
-        printf("Active daemons: %d\n", count);
+	return 0;
 }
 
-/**
- * @brief Displays all entries in the daemon graveyard.
- *
- * Reads tmp/cematary.reg and prints each buried daemon entry with its name
- * and PID. All entries are shown as inactive. Prints a count of buried daemons
- * at the end.
- */
-void dcheck_graveyard(const char *project_root) {
-        char reg_path[PATH_MAX];
-        strncpy(reg_path, project_root, sizeof(reg_path) - 1);
-        strncat(reg_path, "/tmp/cematary.reg",
-                sizeof(reg_path) - strlen(reg_path) - 1);
+static void dcheck(const char *project_root)
+{
+	char	reg_path[PATH_MAX];
+	char	line[1024];
+	char	name[128];
+	char	ts[128];
+	char	proc_path[128];
+	int		pid;
+	int		check;
+	int		count;
+	FILE	*fd;
 
-        // check for daemons created with the same name and add a number to
-        // differentiate it
-        FILE *fd = fopen(reg_path, "r");
-        int count = 0;
+	count = 0;
+	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
+	strncat(reg_path, "/tmp/daemons.reg", sizeof(reg_path) - strlen(reg_path) - 1);
 
-        if (!fd) {
-                perror("dcheck cematary open reg");
-                return;
-        }
-        char line[1024];
-        printf("\n------------------------------------------\n");
-        printf("Daemon Cematary (%s)\n", "tmp/cematary.reg");
-        printf("------------------------------------------\n");
+	// check for daemons created with the same name and add a number to differentiate it
+	fd = ft_fopen(reg_path, "r");
 
-        while (fgets(line, sizeof(line), fd)) {
-                char name[128], ts[128];
-                int pid;
+	printf("------------------------------------------\n");
+	printf("Registered Daemons (%s)\n", "tmp/daemons.reg");
+	printf("------------------------------------------\n");
 
-                if (sscanf(line, "%s %d %[^\n]", name, &pid, ts) != 3)
-                        continue;
+	while (fgets(line, sizeof(line), fd))
+	{
+		if (sscanf(line, "%s %d %[^\n]", name, &pid, ts) != 3)
+			continue;
 
-                printf("[%c] %-12s \tPID: %-6d %s%s\n", '-', name, pid,
-                       "(inactive)", "");
+		snprintf(proc_path, sizeof(proc_path), "/proc/%d", pid);
+		check = (access(proc_path, F_OK) == 0);
 
-                ++count;
-        }
-        fclose(fd);
-        printf("------------------------------------------\n");
-        printf("Daemons burried: %d\n\n", count);
+		if (check)
+			++count;
+
+		printf("[%c] %-12s \tPID: %-6d %s%s\n", check ? '1' : '-', name,
+		       pid, check ? "Started: " : "(inactive)",
+		       check ? ts : "");
+	}
+
+	printf("------------------------------------------\n");
+	printf("Active daemons: %d\n", count);
+
+	fclose(fd);
 }
 
-/**
- * @brief Entry point for the dcheck utility.
- *
- * Resolves the project root, then prints both the active daemon registry
- * and the graveyard of terminated daemons.
- *
- * @param argc Number of command-line arguments (unused).
- * @param argv Array of command-line arguments (unused).
- * @return 0 on success.
- */
-int main(int argc, char **argv) {
-        (void)argc;
-        (void)argv;
+static void dcheck_graveyard(const char *project_root)
+{
+	char	reg_path[PATH_MAX];
+	char	line[1024];
+	char	name[128];
+	char	ts[128];
+	int		pid;
+	int		count;
+	FILE	*fd;
 
-        char *project_root = resolve_project_root();
+	count = 0;
+	strncpy(reg_path, project_root, sizeof(reg_path) - 1);
+	strncat(reg_path, "/tmp/cematary.reg", sizeof(reg_path) - strlen(reg_path) - 1);
 
-        ensure_daemon_files(project_root);
-        dcheck(project_root);
-        dcheck_graveyard(project_root);
+	// check for daemons created with the same name and add a number to differentiate it
+	fd = ft_fopen(reg_path, "r");
 
-        free(project_root);
-        return 0;
+	printf("\n------------------------------------------\n");
+	printf("Daemon Cematary (%s)\n", "tmp/cematary.reg");
+	printf("------------------------------------------\n");
+
+	while (fgets(line, sizeof(line), fd))
+	{
+		if (sscanf(line, "%s %d %[^\n]", name, &pid, ts) != 3)
+			continue;
+
+		printf("[%c] %-12s \tPID: %-6d %s%s\n", '-', name, pid, "(inactive)", "");
+
+		++count;
+	}
+	printf("------------------------------------------\n");
+	printf("Daemons burried: %d\n\n", count);
+
+	fclose(fd);
 }
