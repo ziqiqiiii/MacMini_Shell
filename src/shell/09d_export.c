@@ -108,6 +108,7 @@ static int	add_link_list(char	*input, t_list	**env_list)
 	char	*key;
 	t_env	*data;
 	t_list	*tmp;
+	char	*equal_ptr;
 	int		i;
 
 	key = key_check(input);
@@ -129,6 +130,9 @@ static int	add_link_list(char	*input, t_list	**env_list)
 	}
 	if (i != 0)
 		creat_new_env_node(key, input, env_list);
+	equal_ptr = ft_strchr(input, EQUAL);
+	if (equal_ptr != NULL)
+		setenv(key, equal_ptr + 1, 1);
 	free(key);
 	return (EXIT_SUCCESS);
 }
