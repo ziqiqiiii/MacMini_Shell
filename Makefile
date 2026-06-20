@@ -190,6 +190,13 @@ fclean: clean
 	@ $(MAKE) fclean -C $(LIBFT_DIR)
 	@ echo "$(RED)Deleting $(BLUE)$(NAME)$(CLR_RMV) binary ✔️"
 
+reset: fclean
+	@ echo "$(RED)Deleting $(BLUE)./tmp$(CLR_RMV) dir ✔️"
+	@ $(RM) ./tmp
+	@ echo "$(RED)Deleting $(BLUE)./archive$(CLR_RMV) dir ✔️"
+	@ $(RM) ./archive
+	@ echo "$(RED)Resetting project... All generated files deleted ✔️"
+
 re: fclean all
 
 ################################################################################
@@ -197,6 +204,7 @@ re: fclean all
 ################################################################################
 
 .PHONY:		all run system-programs unit integration test \
-			ai-unit-tests ai-builtin-tests clean fclean re
+			ai-unit-tests ai-builtin-tests clean fclean re \
+			reset
 
 .PRECIOUS:	$(OBJ_DIR)/%.o
