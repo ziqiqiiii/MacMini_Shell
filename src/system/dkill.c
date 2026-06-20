@@ -7,6 +7,16 @@ static void     print_active_daemons(DaemonInfo *daemons, int count);
 static void     kill_one(const char *project_root, DaemonInfo daemon);
 static void     kill_all(const char *project_root, const char *reg_path, DaemonInfo *daemons, int count);
 
+/**
+ * @brief Entry point for the dkill daemon termination utility.
+ *
+ * Resolves the project root, ensures the daemon bookkeeping files exist,
+ * then runs the interactive kill prompt.
+ *
+ * @param argc Number of command-line arguments (unused).
+ * @param argv Array of command-line arguments (unused).
+ * @return 0 on success.
+ */
 int main(int argc, char **argv)
 {
 	(void)  argc;
@@ -20,12 +30,22 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+/**
+ * @brief Record a killed daemon in the graveyard registry.
+ *
+ * Appends an entry to "<project_root>/tmp/cematary.reg", suffixing the name
+ * with ".<count>" if other entries share the same base name so each record
+ * stays unique.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ * @param rip Info for the daemon being buried.
+ */
 static void add_to_graveyard(const char *project_root, DaemonInfo rip)
 {
 	char	reg_path[PATH_MAX];
 	char	modified_name[128];
 	char 	*ts;
-	FILE	*fp
+	FILE	*fp;
 	time_t	now;
 	int		count = 0;
 	int		fd;
@@ -64,6 +84,17 @@ static void add_to_graveyard(const char *project_root, DaemonInfo rip)
 	close(fd);
 }
 
+/**
+ * @brief Load daemons that are still running from the registry.
+ *
+ * Parses each entry in reg_path and, for entries whose /proc/<pid> still
+ * exists, stores their name, pid and timestamp into the daemons array (up
+ * to MAX_DAEMONS).
+ *
+ * @param reg_path Path to the daemons registry file.
+ * @param daemons Out-array filled with the active daemons found.
+ * @return Number of active daemons loaded.
+ */
 static int load_active_daemons(const char *reg_path, DaemonInfo *daemons)
 {
 	FILE	*fd;
@@ -99,6 +130,12 @@ static int load_active_daemons(const char *reg_path, DaemonInfo *daemons)
         return count;
 }
 
+/**
+ * @brief Print a numbered list of the active daemons.
+ *
+ * @param daemons Array of active daemons.
+ * @param count Number of entries in the daemons array.
+ */
 static void print_active_daemons(DaemonInfo *daemons, int count)
 {
 	printf("Active daemons: \n");
@@ -111,6 +148,15 @@ static void print_active_daemons(DaemonInfo *daemons, int count)
 
 }
 
+/**
+ * @brief Send SIGTERM to a single daemon and bury it on success.
+ *
+ * On a successful kill the daemon is added to the graveyard registry;
+ * otherwise the kill error is reported via perror.
+ *
+ * @param project_root Resolved project root (for the graveyard registry).
+ * @param daemon Info for the daemon to terminate.
+ */
 static void kill_one(const char *project_root, DaemonInfo daemon)
 {
 	if (kill(daemon.pid, SIGTERM) == 0)
@@ -124,6 +170,17 @@ static void kill_one(const char *project_root, DaemonInfo daemon)
 	}
 }
 
+/**
+ * @brief Kill every active daemon and clear the registry.
+ *
+ * Terminates each daemon in turn via kill_one(), then truncates the
+ * daemons registry file.
+ *
+ * @param project_root Resolved project root (for the graveyard registry).
+ * @param reg_path Path to the daemons registry to empty afterwards.
+ * @param daemons Array of active daemons to kill.
+ * @param count Number of entries in the daemons array.
+ */
 static void kill_all(const char *project_root, const char *reg_path, DaemonInfo *daemons, int count)
 {
 	for (int i = 0; i < count; ++i)
@@ -133,6 +190,14 @@ static void kill_all(const char *project_root, const char *reg_path, DaemonInfo 
 	fclose(ft_fopen(reg_path, "w"));
 }
 
+/**
+ * @brief Interactive prompt to kill one or all active daemons.
+ *
+ * Loads the active daemons, lists them, and prompts the user to choose one
+ * by number, '0' to cancel, or 'a' to kill them all.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ */
 static void dkill(const char *project_root)
 {
 	char		reg_path[PATH_MAX];

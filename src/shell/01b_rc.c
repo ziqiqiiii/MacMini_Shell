@@ -1,5 +1,15 @@
 #include "minishell.h"
 
+/**
+ * @brief Locate and execute the shell start-up (rc) file.
+ *
+ * Tries the project-local rc file first, then the one in $HOME. If either
+ * is found it is run line by line; if neither exists, an empty project rc
+ * file is created as a starter.
+ *
+ * @param sh Shell root state.
+ * @param envp Environment array passed through to rc command execution.
+ */
 void	source_rc(t_root *sh, char **envp)
 {
 	char	rc_path[PATH_MAX];
@@ -23,6 +33,17 @@ void	source_rc(t_root *sh, char **envp)
 		create_empty_rc(rc_path);
 }
 
+/**
+ * @brief Compute the candidate rc file paths.
+ *
+ * Resolves the project root into sh->current_dir and builds the project rc
+ * path "<root>/.macminishellrc"; if $HOME is set, also builds the home rc
+ * path. Either buffer is left empty if its source is unavailable.
+ *
+ * @param sh Shell root state (its current_dir is set here).
+ * @param rc_path Output buffer (PATH_MAX) for the project rc path.
+ * @param home_path Output buffer (PATH_MAX) for the home rc path.
+ */
 void	get_rc_paths(t_root *sh, char *rc_path, char *home_path)
 {
 	const char	*home;
@@ -36,6 +57,16 @@ void	get_rc_paths(t_root *sh, char *rc_path, char *home_path)
 		snprintf(home_path, PATH_MAX, "%s/.macminishellrc", home);
 }
 
+/**
+ * @brief Read an rc file line by line and act on each line.
+ *
+ * Strips trailing CR/LF, classifies each line, and either updates PATH or
+ * executes the command accordingly. Empty and comment lines are ignored.
+ *
+ * @param fd Open file descriptor for the rc file.
+ * @param sh Shell root state.
+ * @param envp Environment array passed through to command execution.
+ */
 void	run_rc(int fd, t_root *sh, char **envp)
 {
 	char			*line;

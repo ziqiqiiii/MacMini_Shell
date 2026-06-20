@@ -1,8 +1,13 @@
 #include "common.h"
 
-// -1 -> exits, but it's not dir
-// 0 -> exist and it's dir
-// 1 -> do not exist 
+/**
+ * @brief Check whether a path exists and is a directory.
+ *
+ * @param path Filesystem path to inspect.
+ * @return 0 if the path exists and is a directory; -1 if it exists but is
+ *         not a directory (an error is printed to stderr); 1 if it does
+ *         not exist.
+ */
 int	ft_stat(const char *path)
 {
 	struct stat	st;

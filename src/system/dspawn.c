@@ -4,6 +4,17 @@ static void     daemon_register(const char *project_root, const char *name);
 static void     daemon_spawn_log(const char *project_root);
 static void     daemon_work(const char *project_root);
 
+/**
+ * @brief Entry point for the dspawn daemon launcher.
+ *
+ * Resolves the project root, ensures the daemon bookkeeping files exist,
+ * daemonises the process, registers the new daemon, logs its startup, and
+ * enters the perpetual work loop.
+ *
+ * @param argc Number of command-line arguments (unused).
+ * @param argv Array of command-line arguments (unused).
+ * @return 0 (the work loop runs until the process is killed).
+ */
 int main(int argc, char **argv)
 {
 	(void)  argc;
@@ -23,6 +34,14 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+/**
+ * @brief Append a startup record for this daemon to tmp/dspawn.log.
+ *
+ * Opens (creating if needed) "<project_root>/tmp/dspawn.log" and writes a
+ * timestamped line containing the daemon's PID.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ */
 static void daemon_spawn_log(const char *project_root)
 {
 	char	log_path[PATH_MAX];
@@ -39,6 +58,16 @@ static void daemon_spawn_log(const char *project_root)
 	close(fd);
 }
 
+/**
+ * @brief Register the running daemon in tmp/daemons.reg.
+ *
+ * Scans the registry for existing entries sharing the same base name and,
+ * if any exist, suffixes the name with ".<count>" to keep it unique. Appends
+ * a line of "<name> <pid> <timestamp>" to the registry.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ * @param name Base name to register the daemon under.
+ */
 static void daemon_register(const char *project_root, const char *name)
 {
 	char	reg_path[PATH_MAX];
@@ -82,6 +111,14 @@ static void daemon_register(const char *project_root, const char *name)
 	close(fd);
 }
 
+/**
+ * @brief Perpetual daemon work loop.
+ *
+ * Logs a heartbeat message once per cycle and sleeps 10 seconds between
+ * cycles. Never returns; the daemon runs until it is killed.
+ *
+ * @param project_root Resolved project root used for logging.
+ */
 static void daemon_work(const char *project_root)
 {
 	while (1)

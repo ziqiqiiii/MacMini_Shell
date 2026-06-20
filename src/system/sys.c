@@ -41,6 +41,15 @@ int main(int argc, char **argv) {
         return 0;
 }
 
+/**
+ * @brief Count the display width of a UTF-8 string.
+ *
+ * Counts only leading bytes (ignoring 0x80-prefixed continuation bytes) so
+ * multi-byte characters contribute a single display column.
+ *
+ * @param s NUL-terminated UTF-8 string.
+ * @return Number of display columns the string occupies.
+ */
 static int utf8_display_width(const char *s)
 {
 	int w = 0;
@@ -53,6 +62,13 @@ static int utf8_display_width(const char *s)
 	return w;
 }
 
+/**
+ * @brief Load the ASCII logo from logo.txt next to the executable.
+ *
+ * Resolves the executable's directory via /proc/self/exe, reads
+ * "<dir>/logo.txt" line by line into the global logo array (stripping CR/LF),
+ * and tracks the widest line in max_logo_width for later alignment.
+ */
 static void load_logo(void)
 {
 	char	line[MAX_LOGO_WIDTH];
@@ -188,6 +204,13 @@ static void systeminfo(void)
         display_line("Kernel:             %s  %s  (%s)", un.sysname, un.release, un.machine);
 }
 
+/**
+ * @brief Render the logo and info buffers side by side, then free them.
+ *
+ * Prints each row with the logo on the left (padded to max_logo_width) and
+ * the corresponding info line on the right, then frees all logo and info
+ * strings.
+ */
 static void render()
 {
         int lines = (logo_count > info_count) ? logo_count : info_count;

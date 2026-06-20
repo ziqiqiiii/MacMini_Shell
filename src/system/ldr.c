@@ -1,16 +1,6 @@
 #include "system_program.h"
 
 /**
- * @brief Converts a file mode bitmask into a 10-character permission string.
- *
- * Produces an ls-style string such as "drwxr-xr--". The first character
- * reflects the file type (d, c, b, or -); the remaining nine encode owner,
- * group, and other read/write/execute bits.
- *
- * @param mode File mode bitmask from stat(2).
- * @param str  Output buffer of at least 11 bytes; must be caller-allocated.
- */
-/**
  * @brief Prints a file path with directory separators highlighted in yellow.
  *
  * Iterates over each character; '/' is printed in yellow and the following

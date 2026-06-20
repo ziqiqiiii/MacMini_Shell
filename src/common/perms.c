@@ -1,5 +1,14 @@
 #include "common.h"
 
+/**
+ * @brief Render a file mode as a 10-character permission string.
+ *
+ * Produces an ls-style string such as "drwxr-xr-x": index 0 is the file
+ * type (d/c/b or '-'), followed by user, group and other rwx triplets.
+ *
+ * @param mode File mode bits, e.g. from struct stat's st_mode.
+ * @param str Output buffer of at least 11 bytes; filled and NUL-terminated.
+ */
 void	perms_to_string(mode_t mode, char str[11])
 {
 	strcpy(str, "----------");

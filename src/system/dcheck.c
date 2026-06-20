@@ -3,6 +3,16 @@
 static void	dcheck(const char *project_root);
 static void	dcheck_graveyard(const char *project_root);
 
+/**
+ * @brief Entry point for the dcheck daemon status utility.
+ *
+ * Resolves the project root, ensures the daemon bookkeeping files exist,
+ * then prints the registered daemons and the daemon "graveyard" listings.
+ *
+ * @param argc Number of command-line arguments (unused).
+ * @param argv Array of command-line arguments (unused).
+ * @return 0 on success.
+ */
 int main(int argc, char **argv)
 {
 	(void)	argc;
@@ -21,6 +31,15 @@ int main(int argc, char **argv)
 	return 0;
 }
 
+/**
+ * @brief Print the registered daemons and which are still alive.
+ *
+ * Reads "<project_root>/tmp/daemons.reg", and for each entry checks whether
+ * /proc/<pid> exists to determine liveness. Prints a status line per daemon
+ * and a total count of active ones.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ */
 static void dcheck(const char *project_root)
 {
 	char	reg_path[PATH_MAX];
@@ -66,6 +85,14 @@ static void dcheck(const char *project_root)
 	fclose(fd);
 }
 
+/**
+ * @brief Print the daemon "graveyard" of previously killed daemons.
+ *
+ * Reads "<project_root>/tmp/cematary.reg" and prints each recorded daemon
+ * as inactive, followed by a total count of buried daemons.
+ *
+ * @param project_root Resolved project root containing the tmp directory.
+ */
 static void dcheck_graveyard(const char *project_root)
 {
 	char	reg_path[PATH_MAX];

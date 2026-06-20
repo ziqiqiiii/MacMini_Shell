@@ -1,5 +1,5 @@
 #include "system_program.h"
-#include <cstdlib>
+
 
 static int  execute(char **args);
 
@@ -19,6 +19,17 @@ int main(int argc, char **args) {
         return execute(args);
 }
 
+/**
+ * @brief Recursively search a directory tree for matching filenames.
+ *
+ * args[0] is the current directory ("find" maps to the current directory),
+ * and args[1] is the keyword. Prints every entry whose name contains the
+ * keyword, then recurses into each subdirectory (skipping "." and "..").
+ *
+ * @param args Argument vector: args[0] directory, args[1] keyword.
+ * @return EXIT_SUCCESS on success, EXIT_FAILURE on usage error or if the
+ *         directory cannot be opened.
+ */
 static int execute(char **args) {
 
         if (args[1] == NULL) {
