@@ -23,13 +23,20 @@
 # include <libgen.h>
 # include <pthread.h>
 # include <sys/file.h>
-# include <linux/limits.h>
 # include <stdarg.h>
 # include <sys/sysinfo.h>
 
 # include "libft.h"
 # include "get_next_line.h"
 # include "common.h"
+
+/* PATH_MAX comes from <limits.h> on Linux/glibc and from
+ * <sys/syslimits.h> (pulled in by <limits.h>) on macOS. POSIX allows it
+ * to be left undefined when there is no fixed limit, so provide a sane
+ * fallback to keep the system programs portable. */
+# ifndef PATH_MAX
+#  define PATH_MAX 4096
+# endif
 
 # define SHELL_BUFFERSIZE 256
 # define SHELL_INPUT_DELIM " \t\r\n\a"
