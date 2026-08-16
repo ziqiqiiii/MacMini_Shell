@@ -1,4 +1,4 @@
-# MacMini Shell
+# Minishell
 
 A POSIX-like shell implemented in C. Supports interactive prompts, command history, pipes, redirections, environment variable expansion, signal handling, and a set of built-in commands.
 
