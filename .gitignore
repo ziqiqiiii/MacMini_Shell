@@ -60,7 +60,7 @@ dkms.conf
 .dist/
 
 # Program files
-macmini_shell
+minishell
 *.tmp*
 .txt
 tmp/

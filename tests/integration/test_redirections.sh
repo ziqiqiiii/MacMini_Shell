@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-SHELL_BIN=./macmini_shell
+SHELL_BIN=./minishell
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 FAIL=0

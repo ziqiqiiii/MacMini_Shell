@@ -7,7 +7,7 @@
 #                                    CONFIG                                    #
 ################################################################################
 
-NAME		:= macmini_shell
+NAME		:= minishell
 CC			:= gcc
 FLAGS		:= -Wall -Wextra -Werror
 RM			:= rm -rf
@@ -62,7 +62,7 @@ INC			:= -I./$(INC_DIR) -I./$(LIBFT_DIR)/$(INC_DIR) $(INC_RL)
 #                                  SOURCES                                     #
 ################################################################################
 
-# Shell  : every .c under src/shell        -> macmini_shell
+# Shell  : every .c under src/shell        -> minishell
 SHELL_SRC	:= $(wildcard $(SRC_DIR)/shell/*.c)
 SHELL_OBJ	:= $(SHELL_SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
@@ -196,7 +196,7 @@ test: unit integration
 ai-unit-tests ai-builtin-tests:
 	@ if [ -z "$(MODULE)" ]; then \
 		echo "Usage: make $@ MODULE=name"; exit 1; fi
-	@ MACMINI_AGENT_CMD='claude -p --allowedTools ""' \
+	@ MINISHELL_AGENT_CMD='claude -p --allowedTools ""' \
 		bash ./scripts/gen_$(if $(filter ai-builtin-tests,$@),builtin,unit)_tests.sh \
 		$(MODULE) > $(UNIT_DIR)/test_$(MODULE).c
 	@ echo "$(GREEN)Generated$(CLR_RMV) $(UNIT_DIR)/test_$(MODULE).c"

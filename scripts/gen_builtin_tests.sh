@@ -12,11 +12,11 @@
 #   - All shell source files (except 00_main.c) and libft.a are linked
 #   - Every function in minishell.h is callable — no stubs needed
 #
-# Set MACMINI_AGENT_CMD to pipe the prompt to your AI tool, otherwise the
+# Set MINISHELL_AGENT_CMD to pipe the prompt to your AI tool, otherwise the
 # prompt is printed to stdout for manual use:
 #
-#   export MACMINI_AGENT_CMD="claude --print"
-#   export MACMINI_AGENT_CMD="tee /tmp/prompt.txt"
+#   export MINISHELL_AGENT_CMD="claude --print"
+#   export MINISHELL_AGENT_CMD="tee /tmp/prompt.txt"
 
 set -euo pipefail
 
@@ -69,7 +69,7 @@ USED_TYPES="$(echo "$SIGNATURES" \
 
 build_prompt() {
   cat <<PROMPT
-You are generating a C unit test file for the MacMini Shell project.
+You are generating a C unit test file for the Minishell project.
 
 ## Goal
 
@@ -129,12 +129,12 @@ Output only the raw C code — no markdown fences, no tool calls, no explanation
 PROMPT
 }
 
-AGENT_CMD="${MACMINI_AGENT_CMD:-}"
+AGENT_CMD="${MINISHELL_AGENT_CMD:-}"
 
 if [[ -z "$AGENT_CMD" ]]; then
   {
     echo "================================================================"
-    echo "MACMINI_AGENT_CMD not set — printing prompt to stdout."
+    echo "MINISHELL_AGENT_CMD not set — printing prompt to stdout."
     echo "Paste everything below into your AI tool, then save the output"
     echo "to tests/unit/test_${MODULE}.c"
     echo "================================================================"

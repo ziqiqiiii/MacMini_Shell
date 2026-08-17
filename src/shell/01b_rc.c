@@ -37,7 +37,7 @@ void	source_rc(t_root *sh, char **envp)
  * @brief Compute the candidate rc file paths.
  *
  * Resolves the project root into sh->current_dir and builds the project rc
- * path "<root>/.macminishellrc"; if $HOME is set, also builds the home rc
+ * path "<root>/.minishellrc"; if $HOME is set, also builds the home rc
  * path. Either buffer is left empty if its source is unavailable.
  *
  * @param sh Shell root state (its current_dir is set here).
@@ -51,10 +51,10 @@ void	get_rc_paths(t_root *sh, char *rc_path, char *home_path)
 	rc_path[0] = '\0';
 	home_path[0] = '\0';
 	sh->current_dir = resolve_project_root();
-	snprintf(rc_path, PATH_MAX, "%s/.macminishellrc", sh->current_dir);
+	snprintf(rc_path, PATH_MAX, "%s/.minishellrc", sh->current_dir);
 	home = getenv("HOME");
 	if (home)
-		snprintf(home_path, PATH_MAX, "%s/.macminishellrc", home);
+		snprintf(home_path, PATH_MAX, "%s/.minishellrc", home);
 }
 
 /**
@@ -109,10 +109,10 @@ void	create_empty_rc(const char *path)
 	const char	*header;
 
 	fd = ft_open(path, O_CREAT | O_EXCL | O_WRONLY, 0644);
-	header = "# MacMini Shell start-up file\n"
+	header = "# Minishell start-up file\n"
 		"# Add one command per line; blank lines and # comments"
 		" are ignored.\n"
-		"\n# Manifesting Mac Mini\n";
+		"\n# Manifesting Minishell\n";
 	write(fd, header, ft_strlen(header));
 	close(fd);
 }

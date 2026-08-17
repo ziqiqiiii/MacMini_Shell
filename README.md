@@ -74,19 +74,19 @@ sudo apt install libreadline-dev
 Clone the repository and build with `make`:
 
 ```bash
-git clone https://github.com/ziqiqiiii/MacMini_Shell.git
-cd MacMini_Shell
+git clone https://github.com/ziqiqiiii/Minishell.git
+cd Minishell
 make
 ```
 
-This compiles `libft`, all system programs under `./bin/`, and the `macmini_shell` binary.
+This compiles `libft`, all system programs under `./bin/`, and the `minishell` binary.
 
 Other Makefile targets:
 
 | Command      | Description                                 |
 |--------------|---------------------------------------------|
 | `make`       | Build everything (`make all`)               |
-| `make run`   | Build and launch `macmini_shell` immediately|
+| `make run`   | Build and launch `minishell` immediately|
 | `make clean` | Remove object files                         |
 | `make fclean`| Remove object files and binary              |
 | `make re`    | Full rebuild (`fclean` + `all`)             |
@@ -96,7 +96,7 @@ Other Makefile targets:
 ## Run
 
 ```bash
-./macmini_shell
+./minishell
 ```
 
 Or build and run in one step:
@@ -200,9 +200,9 @@ One global variable `g_exit_status` tracks the most recent foreground pipeline e
 ## Project Structure
 
 ```
-MacMini_Shell/
+Minishell/
 ├── src/
-│   ├── shell/         Shell pipeline sources (numbered by stage) → macmini_shell
+│   ├── shell/         Shell pipeline sources (numbered by stage) → minishell
 │   ├── system/        Standalone system programs → bin/
 │   └── common/        Helpers shared by system programs → libcommon.a
 ├── includes/      Header files (minishell.h, system_program.h, common.h)

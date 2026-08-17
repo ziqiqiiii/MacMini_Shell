@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-make          # build libft, system programs (./bin/), and macmini_shell binary
+make          # build libft, system programs (./bin/), and minishell binary
 make run      # build and launch the shell immediately
 make re       # full rebuild (fclean + all)
 make clean    # remove object files
@@ -14,7 +14,7 @@ make fclean   # remove object files and binary
 
 **Readline:** `make` runs a `check-readline` target before building that auto-installs readline if missing — `libreadline-dev` via `sudo apt-get` on Linux/WSL, `readline` via `brew` on macOS. To install manually: `sudo apt install libreadline-dev` (Linux/WSL) or `brew install readline` (macOS).
 
-The binary is named `macmini_shell`. Compiled with `-Wall -Wextra -Werror`. On Linux the build also enables `-fsanitize=address -g3`.
+The binary is named `minishell`. Compiled with `-Wall -Wextra -Werror`. On Linux the build also enables `-fsanitize=address -g3`.
 
 ## Testing
 
@@ -45,13 +45,13 @@ make ai-unit-tests MODULE=<stem>         # e.g. MODULE=rc_parser
 make ai-builtin-tests MODULE=<stem>      # e.g. MODULE=09a_echo
 ```
 
-Both targets invoke `scripts/gen_unit_tests.sh` / `scripts/gen_builtin_tests.sh`, which build a structured prompt and pipe it to `$MACMINI_AGENT_CMD` (defaults to printing to stdout). The generated file lands at `tests/unit/test_<MODULE>.c`.
+Both targets invoke `scripts/gen_unit_tests.sh` / `scripts/gen_builtin_tests.sh`, which build a structured prompt and pipe it to `$MINISHELL_AGENT_CMD` (defaults to printing to stdout). The generated file lands at `tests/unit/test_<MODULE>.c`.
 
 ## Source Tree Layout
 
 Sources are split into three groups under `src/`, each built differently by the Makefile:
 
-- `src/shell/` — every `.c` here is compiled (with AddressSanitizer on Linux) and linked into the `macmini_shell` binary. These are the numbered pipeline files (`00_`–`13_`).
+- `src/shell/` — every `.c` here is compiled (with AddressSanitizer on Linux) and linked into the `minishell` binary. These are the numbered pipeline files (`00_`–`13_`).
 - `src/system/` — each `.c` here is a standalone program compiled into its own binary in `./bin/` (`backup`, `dcheck`, `dkill`, `dplant`, `dspawn`, `find`, `ld`, `ldr`, `sys`). They include `system_program.h`. `sys.c` uses Linux-only APIs and is filtered out of `SYS_SRC` on macOS (`UNAME == Darwin`).
 - `src/common/` — helpers shared by the system programs (`perms.c`, `project.c`), archived into `obj/libcommon.a` and linked into every `bin/` program. They include `common.h`.
 

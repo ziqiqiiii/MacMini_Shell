@@ -48,7 +48,7 @@ static char	*get_prompt_str(void)
 	char	cwd[1024];
 	char	*p;
 	size_t	p_size;
-	char	*shell_name = "MacMini_Shell:";
+	char	*shell_name = "Minishell:";
 	char	*dollar_sign = "$ ";
 
 	ft_memset(cwd, 0, 1024);

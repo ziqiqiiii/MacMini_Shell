@@ -54,7 +54,7 @@ static void	test_get_rc_paths_sets_exe_dir_path(void)
 	memset(&sh, 0, sizeof(sh));
 	get_rc_paths(&sh, rc_path, home_path);
 	exe_dir = resolve_project_root();
-	snprintf(expected, sizeof(expected), "%s/.macminishellrc", exe_dir);
+	snprintf(expected, sizeof(expected), "%s/.minishellrc", exe_dir);
 	TEST_ASSERT_EQUAL_STRING(expected, rc_path);
 	free(exe_dir);
 	free(sh.current_dir);
@@ -73,7 +73,7 @@ static void	test_get_rc_paths_sets_home_path(void)
 	get_rc_paths(&sh, rc_path, home_path);
 	if (home)
 	{
-		snprintf(expected, sizeof(expected), "%s/.macminishellrc", home);
+		snprintf(expected, sizeof(expected), "%s/.minishellrc", home);
 		TEST_ASSERT_EQUAL_STRING(expected, home_path);
 	}
 	else
@@ -217,7 +217,7 @@ static void	test_create_empty_rc_creates_file(void)
 	char	buf[512];
 	ssize_t	n;
 
-	snprintf(path, sizeof(path), "/tmp/test_macmini_rc_%d", getpid());
+	snprintf(path, sizeof(path), "/tmp/test_minishell_rc_%d", getpid());
 	unlink(path);
 	create_empty_rc(path);
 	fd = open(path, O_RDONLY);
@@ -225,7 +225,7 @@ static void	test_create_empty_rc_creates_file(void)
 	n = read(fd, buf, sizeof(buf) - 1);
 	TEST_ASSERT_TRUE(n > 0);
 	buf[n] = '\0';
-	TEST_ASSERT_NOT_NULL(strstr(buf, "MacMini Shell"));
+	TEST_ASSERT_NOT_NULL(strstr(buf, "Minishell"));
 	close(fd);
 	unlink(path);
 }
@@ -237,7 +237,7 @@ static void	test_create_empty_rc_header_has_comment(void)
 	char	buf[512];
 	ssize_t	n;
 
-	snprintf(path, sizeof(path), "/tmp/test_macmini_rc2_%d", getpid());
+	snprintf(path, sizeof(path), "/tmp/test_minishell_rc2_%d", getpid());
 	unlink(path);
 	create_empty_rc(path);
 	fd = open(path, O_RDONLY);
@@ -260,7 +260,7 @@ static void	test_source_rc_creates_rc_when_missing(void)
 	exe_dir = resolve_project_root();
 	if (!exe_dir)
 		TEST_IGNORE_MESSAGE("resolve_project_root returned NULL");
-	snprintf(rc_check, sizeof(rc_check), "%s/.macminishellrc", exe_dir);
+	snprintf(rc_check, sizeof(rc_check), "%s/.minishellrc", exe_dir);
 	unlink(rc_check);
 	memset(&sh, 0, sizeof(sh));
 	g_gnl_total = 0;

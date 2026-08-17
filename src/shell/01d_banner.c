@@ -15,7 +15,7 @@ void	print_banner(t_root *sh)
 	printf("\033[0m");
 	printf("\n");
 	printf("\033[1;32m");
-	printf("                    Welcome to MacMini Shell!\n");
+	printf("                    Welcome to Minishell!\n");
 	printf("\033[0m");
 	printf("\n");
 }

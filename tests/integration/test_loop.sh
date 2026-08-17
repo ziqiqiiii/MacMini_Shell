@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-SHELL_BIN=./macmini_shell
+SHELL_BIN=./minishell
 FAIL=0
 
 INPUT=$(printf "ld\n\n\nnotacommand_xyz\nld\nexit\n")
